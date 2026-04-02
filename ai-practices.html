@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 调用 Engineering Practices — 测试平台适用指南</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-light: #ede9fe;
+      --primary-dark: #5b21b6;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --warning: #d97706;
+      --warning-light: #fff7ed;
+      --danger: #dc2626;
+      --danger-light: #fff1f2;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --radius: 12px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.75;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 55%, #2563eb 100%);
+      color: white;
+      padding: 60px 24px 52px;
+      text-align: center;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white; text-decoration: none;
+      padding: 6px 16px; border-radius: 20px;
+      font-size: 13px; margin-bottom: 24px;
+      transition: background 0.2s;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.22); }
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px; padding: 5px 16px;
+      font-size: 13px; margin-bottom: 20px;
+    }
+    header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 14px; line-height: 1.3; }
+    header p { font-size: 1.05rem; opacity: 0.85; max-width: 640px; margin: 0 auto 28px; }
+    .header-stats {
+      display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+    }
+    .header-stats .stat {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px; padding: 10px 22px; text-align: center;
+    }
+    .header-stats .stat .num { font-size: 1.6rem; font-weight: 800; }
+    .header-stats .stat .label { font-size: 12px; opacity: 0.8; }
+
+    /* Nav */
+    nav {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    nav ul {
+      display: flex; list-style: none;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 24px; overflow-x: auto; gap: 2px;
+    }
+    nav ul li a {
+      display: block; padding: 14px 14px;
+      text-decoration: none; color: var(--gray-600);
+      font-size: 13px; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    nav ul li a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* Layout */
+    main { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* Priority overview */
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px; margin-bottom: 56px;
+    }
+    .priority-card {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .priority-card .num-badge {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; flex-shrink: 0;
+    }
+    .priority-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .priority-card p { font-size: 12px; color: var(--gray-600); }
+
+    /* Practice sections */
+    .practice {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .practice-header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .practice-num {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; flex-shrink: 0; color: white;
+    }
+    .practice-header-text h2 {
+      font-size: 1.15rem; font-weight: 700; margin-bottom: 4px;
+    }
+    .practice-header-text p { font-size: 13px; color: var(--gray-600); }
+    .practice-body { padding: 24px 28px; }
+
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+    }
+    .tag-p1 { background: #fff1f2; color: #be123c; }
+    .tag-p2 { background: #fff7ed; color: #c2410c; }
+    .tag-p3 { background: #fefce8; color: #a16207; }
+    .tag-easy { background: var(--success-light); color: #15803d; }
+    .tag-medium { background: var(--blue-light); color: #1d4ed8; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+    .insight-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .insight-box .label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      color: var(--gray-400); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .insight-box p { font-size: 13px; color: var(--gray-700); }
+
+    .apply-box {
+      background: var(--primary-light);
+      border: 1px solid #c4b5fd;
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .apply-box .label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      color: var(--primary); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .apply-box p { font-size: 13px; color: var(--primary-dark); }
+
+    pre.code {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px; padding: 18px 20px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px; line-height: 1.65;
+      margin: 14px 0;
+    }
+    .code-label {
+      background: #1e293b; color: #64748b;
+      font-size: 11px; font-family: monospace;
+      padding: 4px 12px; border-radius: 6px 6px 0 0;
+      display: inline-block; margin-bottom: -4px;
+    }
+    .c-green { color: #4ade80; }
+    .c-blue { color: #60a5fa; }
+    .c-orange { color: #fb923c; }
+    .c-purple { color: #c084fc; }
+    .c-gray { color: #94a3b8; }
+
+    .warn-box {
+      background: var(--warning-light);
+      border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 13px; color: #92400e;
+      display: flex; gap: 8px; margin: 14px 0;
+    }
+    .tip-box {
+      background: var(--blue-light);
+      border: 1px solid #93c5fd;
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 13px; color: #1e40af;
+      display: flex; gap: 8px; margin: 14px 0;
+    }
+
+    /* Summary table */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th {
+      background: var(--gray-50); color: var(--gray-600);
+      font-size: 13px; font-weight: 600; text-align: left;
+      padding: 12px 16px; border-bottom: 1px solid var(--gray-200);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px; vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    footer {
+      text-align: center; padding: 32px;
+      border-top: 1px solid var(--gray-200);
+      color: var(--gray-400); font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.5rem; }
+      main { padding: 28px 16px 60px; }
+      .practice-header { flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="back-link">← 返回技术方案总览</a>
+  <div class="source-badge">
+    📄 提炼自 IKEA 问卷系统 AI 落地实践
+  </div>
+  <h1>AI 调用 Engineering Practices<br>测试平台适用指南</h1>
+  <p>从问卷系统 AI 工程化实践中提炼的 8 条核心原则，直接适用于电商测试平台的 AI 测试用例生成与分析场景</p>
+  <div class="header-stats">
+    <div class="stat"><div class="num">8</div><div class="label">Engineering Practices</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">立即可落地</div></div>
+    <div class="stat"><div class="num">↓90%</div><div class="label">幻觉风险降低</div></div>
+    <div class="stat"><div class="num">∞→有限</div><div class="label">Tool Calling 成本可控</div></div>
+  </div>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#overview">优先级总览</a></li>
+    <li><a href="#p1">Tool Calling</a></li>
+    <li><a href="#p2">SSE 心跳</a></li>
+    <li><a href="#p3">调用限额</a></li>
+    <li><a href="#p4">MapReduce</a></li>
+    <li><a href="#p5">会话保护</a></li>
+    <li><a href="#p6">Prompt 版本</a></li>
+    <li><a href="#p7">AI 回归测试</a></li>
+    <li><a href="#p8">数据脱敏</a></li>
+    <li><a href="#summary">汇总</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- 优先级概览 -->
+  <section id="overview" style="margin-bottom:56px">
+    <h2 style="font-size:1.4rem;font-weight:700;color:var(--gray-900);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--gray-200)">⚡ 落地优先级总览</h2>
+    <div class="priority-grid">
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fee2e2;color:#dc2626">①</div>
+        <div><h4>SSE 心跳保活</h4><p>防止网关超时断连，稳定性必做</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fee2e2;color:#dc2626">②</div>
+        <div><h4>Tool Calling 限额</h4><p>防死循环，成本可控</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fee2e2;color:#dc2626">③</div>
+        <div><h4>数据脱敏</h4><p>合规底线，发 AI 前必做</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fff7ed;color:#d97706">④</div>
+        <div><h4>Tool Calling 生成结构</h4><p>降低幻觉，提升输出质量</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fff7ed;color:#d97706">⑤</div>
+        <div><h4>AI 输出回归测试</h4><p>Prompt 变更安全网</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fefce8;color:#a16207">⑥</div>
+        <div><h4>MapReduce 分层</h4><p>大批量数据分析必备</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#fefce8;color:#a16207">⑦</div>
+        <div><h4>Prompt 版本管理</h4><p>可迭代可回滚</p></div>
+      </div>
+      <div class="priority-card">
+        <div class="num-badge" style="background:#f0fdf4;color:#16a34a">⑧</div>
+        <div><h4>会话上限保护</h4><p>防止 Context 膨胀</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Practice 1 -->
+  <div class="practice" id="p1">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#7c3aed,#2563eb)">1</div>
+      <div class="practice-header-text">
+        <h2>🔧 Tool Calling 替代"让模型直接输出结构化 JSON"</h2>
+        <p>让模型专注语义生成，工具负责结构正确性，显著降低幻觉风险</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p2">⚡ 优先级 P1</span>
+        <span class="tag tag-medium">难度：中</span>
+      </div>
+
+      <div class="two-col">
+        <div class="insight-box">
+          <div class="label">❌ 问卷系统踩坑</div>
+          <p>让模型一次性输出完整 question JSON → 幻觉概率高、结构漂移、偶发乱码不可解析</p>
+        </div>
+        <div class="apply-box">
+          <div class="label">✅ 测试平台应用</div>
+          <p>AI 生成测试用例时，不直接输出 JUnit/Postman JSON，而是调用工具，工具负责组装</p>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        💡 <span>核心原则：<strong>模型关注"语义生成"，工具负责"结构正确性"</strong>。两者职责分离后，幻觉风险大幅下降。</span>
+      </div>
+
+      <div class="code-label">架构设计</div>
+      <pre class="code"><span class="c-gray"># ❌ 错误做法：让模型直接输出完整 JSON</span>
+prompt = <span class="c-green">"生成一个完整的 JUnit XML 格式测试用例，包含所有字段..."</span>
+<span class="c-gray"># 结果：格式漂移、字段缺失、偶发乱码</span>
+
+<span class="c-gray"># ✅ 正确做法：模型只生成参数，工具负责组装</span>
+tools = [
+    {
+        <span class="c-green">"name"</span>: <span class="c-green">"generateTestCase"</span>,
+        <span class="c-green">"description"</span>: <span class="c-green">"生成标准测试用例"</span>,
+        <span class="c-green">"parameters"</span>: {
+            <span class="c-green">"title"</span>: <span class="c-green">"string"</span>,       <span class="c-gray"># 模型生成</span>
+            <span class="c-green">"steps"</span>: <span class="c-green">"array"</span>,       <span class="c-gray"># 模型生成</span>
+            <span class="c-green">"expected"</span>: <span class="c-green">"string"</span>,    <span class="c-gray"># 模型生成</span>
+            <span class="c-green">"priority"</span>: <span class="c-green">"enum"</span>,      <span class="c-gray"># 强类型约束</span>
+            <span class="c-green">"type"</span>: <span class="c-green">"enum"</span>          <span class="c-gray"># 强类型约束</span>
+        }
+    }
+]
+
+<span class="c-gray"># 工具内部：统一组装为标准 Kiwi TCMS / JUnit 格式</span>
+<span class="c-blue">def</span> <span class="c-orange">generateTestCase</span>(title, steps, expected, priority, type):
+    <span class="c-blue">return</span> {
+        <span class="c-green">"summary"</span>: title,
+        <span class="c-green">"text"</span>: <span class="c-green">"\n"</span>.join(steps),
+        <span class="c-green">"expected_duration"</span>: <span class="c-purple">0</span>,
+        <span class="c-green">"priority"</span>: PRIORITY_MAP[priority],  <span class="c-gray"># 枚举校验</span>
+        <span class="c-green">"category"</span>: TYPE_MAP[type],
+        <span class="c-green">"notes"</span>: expected
+    }</pre>
+
+      <p style="font-size:13px;color:var(--gray-600)">同时支持"参考式生成"：传入已有测试用例或上传 API Spec 文件（JSON/YAML）作为参考，生成质量更稳。</p>
+    </div>
+  </div>
+
+  <!-- Practice 2 -->
+  <div class="practice" id="p2">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#dc2626,#d97706)">2</div>
+      <div class="practice-header-text">
+        <h2>💓 SSE 心跳保活（长耗时 Tool Calling 必做）</h2>
+        <p>防止网关在 AI 思考期间误判连接空闲而断开，是流式 AI 场景的通用解法</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p1">🔴 优先级 P0（必做）</span>
+        <span class="tag tag-easy">难度：低</span>
+      </div>
+
+      <div class="two-col">
+        <div class="insight-box">
+          <div class="label">❌ 问卷系统踩坑</div>
+          <p>Tool Calling 组装参数时无输出，Kong 网关 30 秒超时主动断连，前端报错流程中断</p>
+        </div>
+        <div class="apply-box">
+          <div class="label">✅ 测试平台场景</div>
+          <p>批量生成测试用例（复杂 Story）时，AI 思考阶段可能超过 30 秒，必须加心跳</p>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        ⚠️ <span>如果你们也在用 Kong 网关，必须同时打开：<code>konghq.com/response-buffering: "false"</code>，否则即使加了心跳，流也会被"攒包"，用户看到的是"假流式"。</span>
+      </div>
+
+      <div class="code-label">python — Cloud Function 心跳实现</div>
+      <pre class="code"><span class="c-blue">import</span> asyncio
+<span class="c-blue">from</span> sse_starlette.sse <span class="c-blue">import</span> EventSourceResponse
+
+<span class="c-blue">async def</span> <span class="c-orange">generate_test_cases_stream</span>(story_id: str):
+    <span class="c-green">"""流式生成测试用例，含心跳保活"""</span>
+
+    <span class="c-blue">async def</span> <span class="c-orange">event_generator</span>():
+        <span class="c-gray"># 启动心跳任务</span>
+        heartbeat_task = asyncio.create_task(heartbeat())
+
+        <span class="c-blue">try</span>:
+            <span class="c-gray"># AI 生成（可能有较长 pending 阶段）</span>
+            <span class="c-blue">async for</span> chunk <span class="c-blue">in</span> call_llm_with_tools(story_id):
+                <span class="c-blue">yield</span> {<span class="c-green">"event"</span>: <span class="c-green">"data"</span>, <span class="c-green">"data"</span>: chunk}
+        <span class="c-blue">finally</span>:
+            heartbeat_task.cancel()
+            <span class="c-blue">yield</span> {<span class="c-green">"event"</span>: <span class="c-green">"done"</span>, <span class="c-green">"data"</span>: <span class="c-green">"[DONE]"</span>}
+
+    <span class="c-blue">async def</span> <span class="c-orange">heartbeat</span>():
+        <span class="c-blue">while True</span>:
+            <span class="c-blue">await</span> asyncio.sleep(<span class="c-purple">5</span>)          <span class="c-gray"># 每 5 秒一次</span>
+            <span class="c-blue">yield</span> {<span class="c-green">"event"</span>: <span class="c-green">"heartbeat"</span>, <span class="c-green">"data"</span>: <span class="c-green">"ping"</span>}
+
+    <span class="c-blue">return</span> EventSourceResponse(event_generator())
+
+<span class="c-gray"># 前端忽略心跳事件</span>
+<span class="c-gray"># eventSource.addEventListener('heartbeat', () => {}) // 不做任何处理</span></pre>
+    </div>
+  </div>
+
+  <!-- Practice 3 -->
+  <div class="practice" id="p3">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#dc2626,#7c3aed)">3</div>
+      <div class="practice-header-text">
+        <h2>🔢 Tool Calling 限额，防止死循环</h2>
+        <p>工程化硬约束优于提示词软约束，超限返回结构化错误让模型自然收敛</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p1">🔴 优先级 P0（必做）</span>
+        <span class="tag tag-easy">难度：低</span>
+      </div>
+
+      <div class="insight-box" style="margin-bottom:16px">
+        <div class="label">💡 关键设计原则</div>
+        <p>超限时<strong>不抛异常</strong>，而是返回结构化错误作为"正常工具返回值"喂回模型。抛异常会直接中断 SSE 流，用户体验变成"生成到一半突然断了"。</p>
+      </div>
+
+      <div class="code-label">python — 请求级计数器实现</div>
+      <pre class="code"><span class="c-blue">from</span> contextvars <span class="c-blue">import</span> ContextVar
+<span class="c-blue">from</span> functools <span class="c-blue">import</span> wraps
+
+<span class="c-gray"># 每次请求独立计数，请求结束自动重置</span>
+_tool_call_counts: ContextVar[dict] = ContextVar(<span class="c-green">'tool_call_counts'</span>, default={})
+
+TOOL_LIMITS = {
+    <span class="c-green">"generateTestCase"</span>:  <span class="c-purple">20</span>,  <span class="c-gray"># 单次最多生成 20 个</span>
+    <span class="c-green">"fetchApiSpec"</span>:       <span class="c-purple">2</span>,   <span class="c-gray"># API Spec 最多查 2 次</span>
+    <span class="c-green">"searchJiraStory"</span>:    <span class="c-purple">3</span>,   <span class="c-gray"># Jira 查询最多 3 次</span>
+}
+
+<span class="c-blue">def</span> <span class="c-orange">with_call_limit</span>(tool_name: str):
+    <span class="c-blue">def</span> decorator(func):
+        @wraps(func)
+        <span class="c-blue">def</span> wrapper(*args, **kwargs):
+            counts = _tool_call_counts.get({})
+            current = counts.get(tool_name, <span class="c-purple">0</span>)
+            limit = TOOL_LIMITS.get(tool_name, <span class="c-purple">10</span>)
+
+            <span class="c-blue">if</span> current >= limit:
+                <span class="c-gray"># 不抛异常，返回结构化提示让模型收敛</span>
+                <span class="c-blue">return</span> {
+                    <span class="c-green">"error"</span>: <span class="c-green">"TOOL_CALL_LIMIT_EXCEEDED"</span>,
+                    <span class="c-green">"tool"</span>: tool_name,
+                    <span class="c-green">"limit"</span>: limit,
+                    <span class="c-green">"attempt"</span>: current + <span class="c-purple">1</span>,
+                    <span class="c-green">"message"</span>: <span class="c-green">f"该工具最多调用 {limit} 次，请基于已有信息完成输出。"</span>
+                }
+
+            counts[tool_name] = current + <span class="c-purple">1</span>
+            _tool_call_counts.set(counts)
+            <span class="c-blue">return</span> func(*args, **kwargs)
+        <span class="c-blue">return</span> wrapper
+    <span class="c-blue">return</span> decorator
+
+<span class="c-gray"># 使用方式</span>
+@with_call_limit(<span class="c-green">"fetchApiSpec"</span>)
+<span class="c-blue">def</span> <span class="c-orange">fetchApiSpec</span>(endpoint: str):
+    <span class="c-blue">return</span> get_api_spec_from_swagger(endpoint)</pre>
+    </div>
+  </div>
+
+  <!-- Practice 4 -->
+  <div class="practice" id="p4">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#16a34a,#2563eb)">4</div>
+      <div class="practice-header-text">
+        <h2>📊 大批量数据分层处理（MapReduce 策略）</h2>
+        <p>结构化数据前置计算，非结构化文本分治摘要，避免 Token 超限崩溃</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p2">🟠 优先级 P1</span>
+        <span class="tag tag-medium">难度：中</span>
+      </div>
+
+      <div class="apply-box" style="margin-bottom:16px">
+        <div class="label">测试平台应用场景</div>
+        <p>AI 分析大量测试结果时（如 1000+ 条失败日志），不要直接塞给模型，分层处理速度更快、成本更低、不崩溃。</p>
+      </div>
+
+      <div class="code-label">架构设计 — 三层分治</div>
+      <pre class="code"><span class="c-gray">"""
+测试结果 AI 分析链路
+
+层次 1：结构化数据前置计算（不走 AI）
+  pass/fail 统计、覆盖率、各团队对比 → 代码计算
+  速度快、成本 ¥0、结果 100% 准确
+
+层次 2：文本数据 MapReduce（> 500 条失败日志时启用）
+  Map:    把失败日志按 100 条一批 → Qwen-flash 分批摘要（快且便宜）
+  Reduce: 所有分批摘要 → Qwen-plus 聚合成总结
+
+层次 3：全局分析报告
+  层次1结构化指标 + 层次2文本摘要 → Sonnet/Qwen-plus 生成最终报告
+"""</span>
+
+<span class="c-blue">async def</span> <span class="c-orange">analyze_test_results</span>(run_id: str):
+    <span class="c-gray"># 层次 1：代码计算，不走 AI</span>
+    stats = compute_stats(run_id)  <span class="c-gray"># pass率、覆盖率、各团队对比</span>
+
+    <span class="c-gray"># 层次 2：失败日志 MapReduce</span>
+    failed_logs = get_failed_logs(run_id)
+    <span class="c-blue">if</span> len(failed_logs) > <span class="c-purple">500</span>:
+        batches = chunk(failed_logs, size=<span class="c-purple">100</span>)
+        summaries = <span class="c-blue">await</span> asyncio.gather(*[
+            summarize_batch(b, model=<span class="c-green">"qwen-flash"</span>)  <span class="c-gray"># 快模型 Map</span>
+            <span class="c-blue">for</span> b <span class="c-blue">in</span> batches
+        ])
+        text_insight = <span class="c-blue">await</span> reduce_summaries(summaries, model=<span class="c-green">"qwen-plus"</span>)
+    <span class="c-blue">else</span>:
+        text_insight = <span class="c-blue">await</span> summarize_batch(failed_logs, model=<span class="c-green">"qwen-plus"</span>)
+
+    <span class="c-gray"># 层次 3：全局报告</span>
+    report = <span class="c-blue">await</span> generate_report(
+        structured_stats=stats,
+        text_insight=text_insight,
+        model=<span class="c-green">"claude-sonnet"</span>    <span class="c-gray"># 最终报告用强模型</span>
+    )
+    <span class="c-blue">return</span> report</pre>
+
+      <div class="tip-box">
+        💡 <span>模型选型原则：<strong>快速分批摘要用 Haiku / Qwen-flash</strong>（便宜快），<strong>最终分析报告用 Sonnet / Qwen-plus</strong>（质量高）。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Practice 5 -->
+  <div class="practice" id="p5">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#0891b2,#16a34a)">5</div>
+      <div class="practice-header-text">
+        <h2>🔄 会话上限保护（防止 Context 无限膨胀）</h2>
+        <p>单会话设置轮次上限，避免历史 Context 过长导致成本飙升和幻觉增加</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p3">🟡 优先级 P2</span>
+        <span class="tag tag-easy">难度：低</span>
+      </div>
+
+      <div class="two-col">
+        <div class="insight-box">
+          <div class="label">问卷系统做法</div>
+          <p>单会话最多 50 轮，超出后新建会话，历史记录存 MongoDB 可追溯</p>
+        </div>
+        <div class="apply-box">
+          <div class="label">测试平台应用</div>
+          <p>每个 Sprint 或每个 Story 开新会话，不同 Story 的测试用例生成不共享上下文</p>
+        </div>
+      </div>
+
+      <div class="code-label">python</div>
+      <pre class="code">MAX_TURNS_PER_SESSION = <span class="c-purple">20</span>   <span class="c-gray"># 测试用例生成属于任务型，20轮足够</span>
+
+<span class="c-blue">class</span> <span class="c-orange">TestCaseSession</span>:
+    <span class="c-blue">def</span> <span class="c-orange">__init__</span>(self, story_id: str):
+        self.story_id = story_id
+        self.conversation_id = generate_uuid()
+        self.turns = []
+
+    <span class="c-blue">def</span> <span class="c-orange">add_turn</span>(self, user_msg: str, ai_response: str):
+        <span class="c-blue">if</span> len(self.turns) >= MAX_TURNS_PER_SESSION:
+            <span class="c-gray"># 超出限制：自动归档当前会话，提示用户开新会话</span>
+            self.archive()
+            <span class="c-blue">raise</span> SessionLimitExceeded(
+                <span class="c-green">f"会话已达 {MAX_TURNS_PER_SESSION} 轮上限，请开启新会话继续"</span>
+            )
+        self.turns.append({<span class="c-green">"user"</span>: user_msg, <span class="c-green">"ai"</span>: ai_response})
+
+    <span class="c-blue">def</span> <span class="c-orange">get_context</span>(self) -> list:
+        <span class="c-gray"># 只传最近 N 轮，而非全部历史</span>
+        <span class="c-blue">return</span> self.turns[-<span class="c-purple">10</span>:]  <span class="c-gray"># 滑动窗口，控制 Token 消耗</span></pre>
+    </div>
+  </div>
+
+  <!-- Practice 6 -->
+  <div class="practice" id="p6">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#d97706,#dc2626)">6</div>
+      <div class="practice-header-text">
+        <h2>📝 Prompt 云端版本管理 + 灰度切换</h2>
+        <p>Prompt 变更可追踪、可回滚、支持 A/B 测试，保证可持续迭代</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p2">🟠 优先级 P1</span>
+        <span class="tag tag-easy">难度：低</span>
+      </div>
+
+      <div class="apply-box" style="margin-bottom:16px">
+        <div class="label">为什么必须版本管理</div>
+        <p>Prompt 是测试平台 AI 能力的核心资产。没有版本管理，每次"改一下 Prompt 试试"都是在赌博——不知道改好了还是改坏了，出问题也无法回滚。</p>
+      </div>
+
+      <div class="code-label">实现方案 — GCP Secret Manager 存储版本</div>
+      <pre class="code"><span class="c-gray"># Secret 命名规范：prompt-{场景}-v{版本号}</span>
+<span class="c-gray"># prompt-testcase-gen-v1  →  当前生产版本</span>
+<span class="c-gray"># prompt-testcase-gen-v2  →  灰度测试版本</span>
+<span class="c-gray"># prompt-testcase-gen-v3  →  开发中版本</span>
+
+<span class="c-blue">import</span> os
+<span class="c-blue">from</span> google.cloud <span class="c-blue">import</span> secretmanager
+
+<span class="c-blue">def</span> <span class="c-orange">get_prompt</span>(scenario: str, team: str = <span class="c-green">"default"</span>) -> str:
+    <span class="c-gray"># 灰度路由：Checkout 团队使用 v2 测试</span>
+    version_map = {
+        <span class="c-green">"checkout"</span>: <span class="c-green">"v2"</span>,   <span class="c-gray"># 灰度</span>
+        <span class="c-green">"default"</span>: <span class="c-green">"v1"</span>,    <span class="c-gray"># 生产稳定版</span>
+    }
+    version = version_map.get(team, <span class="c-green">"v1"</span>)
+    secret_name = <span class="c-green">f"prompt-{scenario}-{version}"</span>
+
+    client = secretmanager.SecretManagerServiceClient()
+    name = <span class="c-green">f"projects/{PROJECT_ID}/secrets/{secret_name}/versions/latest"</span>
+    response = client.access_secret_version(request={<span class="c-green">"name"</span>: name})
+    <span class="c-blue">return</span> response.payload.data.decode(<span class="c-green">"UTF-8"</span>)
+
+<span class="c-gray"># 版本切换：不改代码，只更新 Secret</span>
+<span class="c-gray"># gcloud secrets versions add prompt-testcase-gen-v2 --data-file=new_prompt.txt</span></pre>
+    </div>
+  </div>
+
+  <!-- Practice 7 -->
+  <div class="practice" id="p7">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#2563eb,#16a34a)">7</div>
+      <div class="practice-header-text">
+        <h2>🧪 AI 输出的自动化回归测试</h2>
+        <p>每次改 Prompt 或换模型后，自动校验输出质量，防止引入回归风险</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p2">🟠 优先级 P1</span>
+        <span class="tag tag-medium">难度：中</span>
+      </div>
+
+      <div class="tip-box">
+        💡 <span>测试平台用 AI 生成测试用例，本身也需要被测试。<strong>用测试的方式管理 AI，形成完整闭环。</strong></span>
+      </div>
+
+      <div class="code-label">python — AI 输出质量校验脚本</div>
+      <pre class="code"><span class="c-blue">import</span> pytest, json
+
+<span class="c-blue">class</span> <span class="c-orange">TestAITestCaseGeneration</span>:
+    <span class="c-green">"""每次 Prompt 变更后自动运行此套件"""</span>
+
+    SAMPLE_STORIES = [
+        {<span class="c-green">"title"</span>: <span class="c-green">"用户添加商品到购物车"</span>, <span class="c-green">"team"</span>: <span class="c-green">"checkout"</span>},
+        {<span class="c-green">"title"</span>: <span class="c-green">"库存扣减并发控制"</span>,    <span class="c-green">"team"</span>: <span class="c-green">"inventory"</span>},
+        {<span class="c-green">"title"</span>: <span class="c-green">"用户注册并登录"</span>,        <span class="c-green">"team"</span>: <span class="c-green">"customer"</span>},
+    ]
+
+    <span class="c-blue">def</span> <span class="c-orange">test_output_is_valid_json</span>(self, story):
+        result = call_ai_generate(story)
+        parsed = json.loads(result)          <span class="c-gray"># 必须可解析</span>
+        <span class="c-blue">assert</span> <span class="c-green">"test_cases"</span> <span class="c-blue">in</span> parsed
+
+    <span class="c-blue">def</span> <span class="c-orange">test_has_all_scenario_types</span>(self, story):
+        result = call_ai_generate(story)
+        types = {tc[<span class="c-green">"type"</span>] <span class="c-blue">for</span> tc <span class="c-blue">in</span> result[<span class="c-green">"test_cases"</span>]}
+        <span class="c-blue">assert</span> <span class="c-green">"positive"</span> <span class="c-blue">in</span> types     <span class="c-gray"># 必须有正向场景</span>
+        <span class="c-blue">assert</span> <span class="c-green">"negative"</span> <span class="c-blue">in</span> types     <span class="c-gray"># 必须有负向场景</span>
+        <span class="c-blue">assert</span> <span class="c-green">"boundary"</span> <span class="c-blue">in</span> types     <span class="c-gray"># 必须有边界场景</span>
+
+    <span class="c-blue">def</span> <span class="c-orange">test_no_duplicate_titles</span>(self, story):
+        result = call_ai_generate(story)
+        titles = [tc[<span class="c-green">"title"</span>] <span class="c-blue">for</span> tc <span class="c-blue">in</span> result[<span class="c-green">"test_cases"</span>]]
+        <span class="c-blue">assert</span> len(titles) == len(set(titles))  <span class="c-gray"># 无重复标题</span>
+
+    <span class="c-blue">def</span> <span class="c-orange">test_priority_is_valid_enum</span>(self, story):
+        result = call_ai_generate(story)
+        valid = {<span class="c-green">"high"</span>, <span class="c-green">"medium"</span>, <span class="c-green">"low"</span>}
+        <span class="c-blue">for</span> tc <span class="c-blue">in</span> result[<span class="c-green">"test_cases"</span>]:
+            <span class="c-blue">assert</span> tc[<span class="c-green">"priority"</span>] <span class="c-blue">in</span> valid  <span class="c-gray"># 枚举合法</span>
+
+    <span class="c-blue">def</span> <span class="c-orange">test_steps_not_empty</span>(self, story):
+        result = call_ai_generate(story)
+        <span class="c-blue">for</span> tc <span class="c-blue">in</span> result[<span class="c-green">"test_cases"</span>]:
+            <span class="c-blue">assert</span> len(tc[<span class="c-green">"steps"</span>]) >= <span class="c-purple">2</span>    <span class="c-gray"># 步骤不能为空</span>
+
+    <span class="c-blue">def</span> <span class="c-orange">test_minimum_test_case_count</span>(self, story):
+        result = call_ai_generate(story)
+        <span class="c-blue">assert</span> len(result[<span class="c-green">"test_cases"</span>]) >= <span class="c-purple">3</span>  <span class="c-gray"># 至少 3 个用例</span></pre>
+
+      <p style="font-size:13px;color:var(--gray-600);margin-top:12px">在 GitHub Actions 中，每次 Prompt 变更的 PR 都自动触发此套件，合并前必须全部通过。</p>
+    </div>
+  </div>
+
+  <!-- Practice 8 -->
+  <div class="practice" id="p8">
+    <div class="practice-header">
+      <div class="practice-num" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">8</div>
+      <div class="practice-header-text">
+        <h2>🛡️ 发送 AI 前数据脱敏</h2>
+        <p>识别并过滤 Story/日志中的敏感信息，在"可分析"与"可合规"之间守住底线</p>
+      </div>
+    </div>
+    <div class="practice-body">
+      <div class="tag-row">
+        <span class="tag tag-p1">🔴 优先级 P0（必做）</span>
+        <span class="tag tag-easy">难度：低</span>
+      </div>
+
+      <div class="warn-box">
+        ⚠️ <span>中国区业务尤其需要注意：订单号、手机号、用户 ID、身份证号都属于敏感数据，发送给第三方 AI 平台前必须脱敏。</span>
+      </div>
+
+      <div class="code-label">python — 脱敏处理</div>
+      <pre class="code"><span class="c-blue">import</span> re
+
+SENSITIVE_PATTERNS = {
+    <span class="c-green">"phone"</span>:    (r<span class="c-green">'1[3-9]\d{9}'</span>,            <span class="c-green">"[PHONE]"</span>),
+    <span class="c-green">"email"</span>:    (r<span class="c-green">'[\w.-]+@[\w.-]+\.\w+'</span>,    <span class="c-green">"[EMAIL]"</span>),
+    <span class="c-green">"id_card"</span>:  (r<span class="c-green">'\d{17}[\dXx]'</span>,            <span class="c-green">"[ID_CARD]"</span>),
+    <span class="c-green">"order_id"</span>: (r<span class="c-green">'ORD-\d{10,}'</span>,             <span class="c-green">"[ORDER_ID]"</span>),
+    <span class="c-green">"user_id"</span>:  (r<span class="c-green">'uid[=:]\s*\d+'</span>,           <span class="c-green">"[USER_ID]"</span>),
+}
+
+<span class="c-blue">def</span> <span class="c-orange">desensitize</span>(text: str) -> str:
+    <span class="c-green">"""发送给 AI 前调用此函数"""</span>
+    <span class="c-blue">for</span> pattern, replacement <span class="c-blue">in</span> SENSITIVE_PATTERNS.values():
+        text = re.sub(pattern, replacement, text)
+    <span class="c-blue">return</span> text
+
+<span class="c-gray"># 使用</span>
+story_content = fetch_jira_story(story_id)
+safe_content = desensitize(story_content)   <span class="c-gray"># ← 脱敏后再发 AI</span>
+test_cases = await call_llm(safe_content)</pre>
+    </div>
+  </div>
+
+  <!-- 汇总表 -->
+  <section id="summary" style="margin-top:48px">
+    <h2 style="font-size:1.4rem;font-weight:700;color:var(--gray-900);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--gray-200)">📋 汇总 — 实施路线图</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Practice</th>
+            <th>优先级</th>
+            <th>难度</th>
+            <th>核心价值</th>
+            <th>建议实施时机</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>2</strong></td>
+            <td>SSE 心跳保活</td>
+            <td><span style="color:#dc2626;font-weight:600">🔴 P0</span></td>
+            <td>低</td>
+            <td>防止网关超时断连</td>
+            <td>第1周上线前</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td>Tool Calling 限额</td>
+            <td><span style="color:#dc2626;font-weight:600">🔴 P0</span></td>
+            <td>低</td>
+            <td>成本可控，防死循环</td>
+            <td>第1周上线前</td>
+          </tr>
+          <tr>
+            <td><strong>8</strong></td>
+            <td>数据脱敏</td>
+            <td><span style="color:#dc2626;font-weight:600">🔴 P0</span></td>
+            <td>低</td>
+            <td>合规底线</td>
+            <td>第1周上线前</td>
+          </tr>
+          <tr>
+            <td><strong>1</strong></td>
+            <td>Tool Calling 生成结构</td>
+            <td><span style="color:#d97706;font-weight:600">🟠 P1</span></td>
+            <td>中</td>
+            <td>降低幻觉，提升质量</td>
+            <td>第2周</td>
+          </tr>
+          <tr>
+            <td><strong>7</strong></td>
+            <td>AI 输出回归测试</td>
+            <td><span style="color:#d97706;font-weight:600">🟠 P1</span></td>
+            <td>中</td>
+            <td>Prompt 迭代安全网</td>
+            <td>第2周</td>
+          </tr>
+          <tr>
+            <td><strong>6</strong></td>
+            <td>Prompt 版本管理</td>
+            <td><span style="color:#d97706;font-weight:600">🟠 P1</span></td>
+            <td>低</td>
+            <td>可追踪可回滚</td>
+            <td>第2周</td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td>MapReduce 分层分析</td>
+            <td><span style="color:#a16207;font-weight:600">🟡 P2</span></td>
+            <td>中</td>
+            <td>大数据分析稳定性</td>
+            <td>第3周</td>
+          </tr>
+          <tr>
+            <td><strong>5</strong></td>
+            <td>会话上限保护</td>
+            <td><span style="color:#a16207;font-weight:600">🟡 P2</span></td>
+            <td>低</td>
+            <td>防 Context 膨胀</td>
+            <td>第3周</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:24px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border:1px solid #c4b5fd;border-radius:var(--radius);padding:24px 28px;text-align:center">
+      <div style="font-size:1rem;font-weight:700;color:var(--primary-dark);margin-bottom:8px">
+        🎯 核心结论
+      </div>
+      <p style="font-size:14px;color:#4c1d95;max-width:600px;margin:0 auto">
+        AI 能力本身很重要，但把它<strong>工程化、可控化、可迭代</strong>更重要。<br>
+        不追"最火技术名词"，围绕测试平台业务，把<strong>稳定性、准确性、合规性</strong>一项项打磨出来。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>AI 调用 Engineering Practices — 提炼自 IKEA 问卷系统 AI 落地实践</p>
+  <p style="margin-top:6px">
+    <a href="index.html" style="color:var(--primary);text-decoration:none">← 返回总览</a>
+    &nbsp;·&nbsp;
+    <a href="aliyun.html" style="color:var(--primary);text-decoration:none">☁️ 阿里云部署方案</a>
+  </p>
+</footer>
+
+</body>
+</html>
