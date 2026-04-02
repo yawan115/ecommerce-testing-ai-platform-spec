@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>电商平台 AI 辅助全链路测试管理平台 — 技术方案</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --accent: #7c3aed;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --radius: 10px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.7;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #7c3aed 100%);
+      color: white;
+      padding: 56px 0 48px;
+      text-align: center;
+    }
+    header .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+    header p { font-size: 1.05rem; opacity: 0.85; max-width: 600px; margin: 0 auto 24px; }
+    .header-meta { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+    .header-meta span {
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 4px 14px;
+      font-size: 13px;
+    }
+
+    /* Nav */
+    nav {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    nav ul {
+      display: flex;
+      list-style: none;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      overflow-x: auto;
+      gap: 4px;
+    }
+    nav ul li a {
+      display: block;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--gray-600);
+      font-size: 14px;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    nav ul li a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* Layout */
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    section { margin-bottom: 64px; }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2 .icon {
+      width: 32px; height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 16px; flex-shrink: 0;
+    }
+    h3 { font-size: 1.1rem; font-weight: 600; color: var(--gray-800); margin: 28px 0 12px; }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .card.accent { border-left: 4px solid var(--primary); }
+    .card.success { border-left: 4px solid var(--success); }
+    .card.warning { border-left: 4px solid var(--warning); }
+    .card.purple { border-left: 4px solid var(--accent); }
+
+    /* Architecture diagram */
+    .arch-diagram {
+      background: var(--gray-900);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      overflow-x: auto;
+    }
+    .arch-diagram pre {
+      color: #e2e8f0;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre;
+    }
+    .arch-layer {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .arch-layer.blue { background: #dbeafe; border: 1px solid #93c5fd; }
+    .arch-layer.purple { background: #ede9fe; border: 1px solid #c4b5fd; }
+    .arch-layer.green { background: #dcfce7; border: 1px solid #86efac; }
+    .arch-layer.orange { background: #fff7ed; border: 1px solid #fdba74; }
+    .arch-layer.gray { background: var(--gray-100); border: 1px solid var(--gray-200); }
+    .arch-arrow { text-align: center; color: var(--gray-400); font-size: 22px; margin: 4px 0; }
+
+    /* Code blocks */
+    pre.code {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+    .code-label {
+      background: var(--gray-800);
+      color: var(--gray-400);
+      font-size: 11px;
+      font-family: monospace;
+      padding: 4px 12px;
+      border-radius: 6px 6px 0 0;
+      display: inline-block;
+      margin-bottom: -4px;
+    }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th {
+      background: var(--gray-50);
+      color: var(--gray-600);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    .badge-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag-blue { background: #dbeafe; color: #1d4ed8; }
+    .tag-green { background: #dcfce7; color: #15803d; }
+    .tag-orange { background: #fff7ed; color: #c2410c; }
+    .tag-purple { background: #ede9fe; color: #6d28d9; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 36px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--gray-200);
+    }
+    .timeline-item { position: relative; margin-bottom: 28px; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -30px; top: 6px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .timeline-item h4 { font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+    .timeline-item p { font-size: 14px; color: var(--gray-600); }
+    .week-label {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+
+    /* Cost highlight */
+    .cost-highlight {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 2px solid #86efac;
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .cost-highlight .amount { font-size: 2.5rem; font-weight: 800; color: #15803d; }
+    .cost-highlight .label { font-size: 14px; color: var(--gray-600); margin-top: 4px; }
+    .cost-compare { display: flex; gap: 24px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .cost-compare .item { text-align: center; }
+    .cost-compare .item .val { font-size: 1.4rem; font-weight: 700; }
+    .cost-compare .item .desc { font-size: 13px; color: var(--gray-600); }
+
+    /* Security list */
+    .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .security-item {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .security-item .icon-wrap {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--gray-200);
+      color: var(--gray-400);
+      font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.5rem; }
+      main { padding: 24px 16px 60px; }
+      .cost-compare { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">📋 技术方案 v1.0</div>
+  <h1>电商平台 AI 辅助<br>全链路测试管理平台</h1>
+  <p>基于 Kiwi TCMS + GCP + GitHub Actions + AI 的低成本企业级测试管理解决方案</p>
+  <div class="header-meta">
+    <span>🏢 多团队支持</span>
+    <span>🤖 AI 辅助生成</span>
+    <span>💰 节省 98% 成本</span>
+    <span>☁️ GCP 自托管</span>
+  </div>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#arch">整体架构</a></li>
+    <li><a href="#kiwi">Kiwi TCMS 部署</a></li>
+    <li><a href="#jira">Jira 集成</a></li>
+    <li><a href="#github">GitHub Actions</a></li>
+    <li><a href="#ai">AI 生成测试用例</a></li>
+    <li><a href="#dashboard">Grafana Dashboard</a></li>
+    <li><a href="#security">安全设计</a></li>
+    <li><a href="#timeline">落地计划</a></li>
+    <li><a href="#cost">成本估算</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- 架构 -->
+  <section id="arch">
+    <h2><span class="icon">🏗</span>整体架构</h2>
+    <div class="arch-layer blue">
+      <strong>📋 需求层（Jira）</strong> — Epic → Story → Acceptance Criteria
+    </div>
+    <div class="arch-arrow">↓ Webhook 触发</div>
+    <div class="arch-layer purple">
+      <strong>🤖 AI 测试用例生成器（GCP Cloud Function）</strong> — Jira Story → Claude Haiku → 测试用例草稿 → Kiwi TCMS
+    </div>
+    <div class="arch-arrow">↓ REST API</div>
+    <div class="arch-layer blue">
+      <strong>🗂 Kiwi TCMS（GCP Cloud Run 自托管）</strong><br>
+      需求追踪 ↔ 测试用例库 ↔ 测试计划 ↔ 执行记录 ↔ 缺陷<br>
+      <span style="font-size:13px;color:#4b5563">Checkout 项目 | Inventory 项目 | Customer 项目</span>
+    </div>
+    <div class="arch-arrow">↓ 结果上报 &amp; Bug 同步</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+      <div class="arch-layer green">
+        <strong>⚙️ GitHub Actions</strong><br>
+        <span style="font-size:13px">各团队保留现有框架<br>Pytest / Playwright / Newman</span>
+      </div>
+      <div class="arch-layer orange">
+        <strong>📋 Jira</strong><br>
+        <span style="font-size:13px">自动创建 Bug Issue<br>关联原始 Story</span>
+      </div>
+    </div>
+    <div class="arch-arrow">↓ 数据汇聚</div>
+    <div class="arch-layer gray">
+      <strong>📊 Grafana Dashboard</strong> — 多团队覆盖率 | 需求追踪矩阵 | 测试趋势 | CI 通过率
+    </div>
+  </section>
+
+  <!-- Kiwi 部署 -->
+  <section id="kiwi">
+    <h2><span class="icon">☁️</span>Kiwi TCMS 部署（GCP）</h2>
+    <p style="color:var(--gray-600);margin-bottom:20px">推荐方案：Cloud Run（无服务器）+ Cloud SQL（PostgreSQL）</p>
+
+    <h3>第一步：创建 Cloud SQL</h3>
+    <div class="code-label">bash</div>
+    <pre class="code">gcloud sql instances create kiwi-db \
+  --database-version=POSTGRES_15 \
+  --tier=db-f1-micro \
+  --region=asia-east1 \
+  --project=YOUR_PROJECT_ID
+
+gcloud sql databases create kiwi --instance=kiwi-db
+gcloud sql users create kiwi_user \
+  --instance=kiwi-db --password=YOUR_SECURE_PASSWORD</pre>
+
+    <h3>第二步：推送镜像到 Artifact Registry</h3>
+    <div class="code-label">bash</div>
+    <pre class="code">docker pull kiwitcms/kiwi:latest
+docker tag kiwitcms/kiwi:latest \
+  asia-east1-docker.pkg.dev/PROJECT/kiwi/app:latest
+docker push asia-east1-docker.pkg.dev/PROJECT/kiwi/app:latest</pre>
+
+    <h3>第三步：部署 Cloud Run</h3>
+    <div class="code-label">bash</div>
+    <pre class="code">gcloud run deploy kiwi-tcms \
+  --image=asia-east1-docker.pkg.dev/PROJECT/kiwi/app:latest \
+  --region=asia-east1 \
+  --platform=managed \
+  --add-cloudsql-instances=PROJECT:asia-east1:kiwi-db \
+  --set-env-vars="KIWI_DB_HOST=/cloudsql/PROJECT:asia-east1:kiwi-db" \
+  --set-secrets="KIWI_DB_PASSWORD=kiwi-db-password:latest" \
+  --memory=1Gi \
+  --allow-unauthenticated=false</pre>
+
+    <h3>第四步：初始化数据库</h3>
+    <div class="code-label">bash</div>
+    <pre class="code">gcloud run jobs create kiwi-migrate \
+  --image=asia-east1-docker.pkg.dev/PROJECT/kiwi/app:latest \
+  --command="python" --args="manage.py,migrate" \
+  --region=asia-east1
+
+gcloud run jobs execute kiwi-migrate</pre>
+  </section>
+
+  <!-- Jira 集成 -->
+  <section id="jira">
+    <h2><span class="icon">🔗</span>Jira 集成</h2>
+    <div class="card-grid">
+      <div class="card accent">
+        <h3 style="margin-top:0">Jira → Kiwi（正向）</h3>
+        <ol style="padding-left:18px;font-size:14px;color:var(--gray-600);line-height:2">
+          <li>Story 创建/更新触发 Webhook</li>
+          <li>Cloud Function 调用 AI 生成测试用例</li>
+          <li>自动在 Kiwi 创建用例并关联需求</li>
+        </ol>
+      </div>
+      <div class="card success">
+        <h3 style="margin-top:0">Kiwi → Jira（反向）</h3>
+        <ol style="padding-left:18px;font-size:14px;color:var(--gray-600);line-height:2">
+          <li>执行失败触发 Kiwi Webhook</li>
+          <li>自动在 Jira 创建 Bug Issue</li>
+          <li>关联原始 Story，附上日志截图</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>Jira Webhook 配置</h3>
+    <div class="code-label">配置项</div>
+    <pre class="code">URL:    https://REGION-PROJECT.cloudfunctions.net/jira-to-kiwi
+Events: Issue Created, Issue Updated
+Filter: project in (CHECKOUT, INVENTORY, CUSTOMER)
+        AND issuetype = Story</pre>
+
+    <h3>Cloud Function 核心代码</h3>
+    <div class="code-label">python — jira_to_kiwi/main.py</div>
+    <pre class="code">import functions_framework
+from anthropic import Anthropic
+import requests
+
+@functions_framework.http
+def handle_jira_webhook(request):
+    payload = request.get_json()
+    story = payload['issue']
+    title = story['fields']['summary']
+    description = story['fields']['description']
+    acceptance_criteria = story['fields'].get('customfield_10016', '')
+
+    # AI 生成测试用例（使用 Haiku 省成本）
+    client = Anthropic()
+    response = client.messages.create(
+        model="claude-haiku-3-5",
+        max_tokens=2000,
+        messages=[{
+            "role": "user",
+            "content": f"""
+            根据以下用户故事生成测试用例（JSON格式）。
+            包括：正向场景、负向场景、边界场景、API测试要点。
+
+            Story: {title}
+            描述: {description}
+            验收标准: {acceptance_criteria}
+            """
+        }]
+    )
+
+    test_cases = parse_ai_response(response.content[0].text)
+    for tc in test_cases:
+        create_kiwi_testcase(tc, story['key'])
+
+    return {'status': 'ok', 'created': len(test_cases)}</pre>
+  </section>
+
+  <!-- GitHub Actions -->
+  <section id="github">
+    <h2><span class="icon">⚙️</span>GitHub Actions 集成</h2>
+    <p style="color:var(--gray-600);margin-bottom:16px">各团队保留现有测试框架，只需在 CI 末尾加上统一上报步骤。</p>
+
+    <div class="table-wrap" style="margin-bottom:20px">
+      <table>
+        <thead><tr><th>团队</th><th>现有测试框架</th><th>上报方式</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="badge-tag tag-blue">Checkout</span></td>
+            <td>Pytest</td>
+            <td><code>pytest --junit-xml=results.xml</code></td>
+          </tr>
+          <tr>
+            <td><span class="badge-tag tag-green">Inventory</span></td>
+            <td>Newman (Postman)</td>
+            <td><code>newman run --reporters junit</code></td>
+          </tr>
+          <tr>
+            <td><span class="badge-tag tag-orange">Customer</span></td>
+            <td>Playwright</td>
+            <td><code>playwright test --reporter=junit</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>统一 GitHub Actions 模板</h3>
+    <div class="code-label">yaml — .github/workflows/test-and-report.yml</div>
+    <pre class="code">name: Test &amp; Report to Kiwi TCMS
+on: [push, pull_request]
+
+env:
+  KIWI_URL: ${{ secrets.KIWI_URL }}
+  KIWI_USERNAME: ${{ secrets.KIWI_USERNAME }}
+  KIWI_PASSWORD: ${{ secrets.KIWI_PASSWORD }}
+  KIWI_PLAN_ID: "checkout-sprint-42"   # 各团队修改此处
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ↓ 各团队保留自己的测试步骤
+      - name: Run Tests
+        run: |
+          pip install pytest pytest-junit
+          pytest --junit-xml=results.xml
+
+      # ↓ 统一上报步骤（所有团队相同，无需修改）
+      - name: Report Results to Kiwi TCMS
+        if: always()
+        run: |
+          pip install tcms-api
+          python -c "
+          from tcms_api import TCMS
+          tcms = TCMS()
+          tcms.upload_junit('results.xml', plan_id='$KIWI_PLAN_ID')
+          "
+
+      - name: Upload Artifacts on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results.xml</pre>
+  </section>
+
+  <!-- AI 生成 -->
+  <section id="ai">
+    <h2><span class="icon">🤖</span>AI 测试用例生成器</h2>
+    <div class="card purple">
+      <p style="font-size:14px;color:var(--gray-600)">使用 <strong>Claude Haiku</strong>（最低成本），每个 Story 生成费用 &lt; $0.01。通过 GCP Cloud Function 实现 Serverless 按调用计费。</p>
+    </div>
+
+    <h3>AI Prompt 设计</h3>
+    <div class="code-label">python</div>
+    <pre class="code">SYSTEM_PROMPT = """
+你是一个电商平台的高级 QA 工程师。
+根据用户故事生成完整测试用例，必须包含：
+
+1. ✅ 正向场景（Happy Path）
+2. ❌ 负向场景（异常输入、越权、并发）
+3. 📐 边界场景（金额边界、库存为0、超时等）
+4. 🔌 API 测试要点（请求/响应格式、状态码）
+
+输出格式（JSON）：
+{
+  "test_cases": [
+    {
+      "title": "测试用例标题",
+      "type": "functional | security | performance",
+      "priority": "high | medium | low",
+      "preconditions": "前置条件",
+      "steps": ["步骤1", "步骤2"],
+      "expected_result": "预期结果",
+      "api_spec": {
+        "method": "POST",
+        "endpoint": "/api/checkout",
+        "request_body": {},
+        "expected_status": 200
+      }
+    }
+  ]
+}
+"""</pre>
+
+    <h3>生成效果示例（Checkout 团队）</h3>
+    <div class="card-grid">
+      <div class="card accent">
+        <strong style="font-size:13px;color:var(--primary)">✅ 正向场景</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--gray-600)">用户添加商品到购物车并成功下单，支付成功后订单状态变为 CONFIRMED</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--danger)">
+        <strong style="font-size:13px;color:var(--danger)">❌ 负向场景</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--gray-600)">库存不足时下单返回 400，并发下单时库存扣减不超卖，未登录用户下单返回 401</p>
+      </div>
+      <div class="card warning">
+        <strong style="font-size:13px;color:var(--warning)">📐 边界场景</strong>
+        <p style="font-size:13px;margin-top:8px;color:var(--gray-600)">购物车商品数量为 0、负数、最大整数；订单金额精确到分；超时重试幂等性</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section id="dashboard">
+    <h2><span class="icon">📊</span>Grafana Dashboard</h2>
+    <p style="color:var(--gray-600);margin-bottom:20px">数据源：Kiwi TCMS PostgreSQL（只读连接），部署在 GCP 或阿里云。</p>
+
+    <div class="card-grid">
+      <div class="card accent">
+        <div style="font-size:24px;margin-bottom:8px">📋</div>
+        <strong>需求覆盖率矩阵</strong>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:6px">Story → 测试用例覆盖情况，红绿矩阵快速定位空白</p>
+      </div>
+      <div class="card success">
+        <div style="font-size:24px;margin-bottom:8px">📈</div>
+        <strong>各团队测试通过率</strong>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:6px">Checkout / Inventory / Customer 实时通过率对比</p>
+      </div>
+      <div class="card warning">
+        <div style="font-size:24px;margin-bottom:8px">📉</div>
+        <strong>CI 趋势（30天）</strong>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:6px">每日构建通过率趋势，快速发现质量劣化</p>
+      </div>
+      <div class="card purple">
+        <div style="font-size:24px;margin-bottom:8px">⚠️</div>
+        <strong>未覆盖需求列表</strong>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:6px">实时列出无测试用例的 Story，驱动补充</p>
+      </div>
+    </div>
+
+    <h3>核心 SQL 查询</h3>
+    <div class="code-label">sql — 各团队需求覆盖率</div>
+    <pre class="code">SELECT
+  p.name                                              AS team,
+  COUNT(DISTINCT r.id)                                AS total_requirements,
+  COUNT(DISTINCT tc.id)                               AS covered,
+  ROUND(COUNT(DISTINCT tc.id) * 100.0
+        / NULLIF(COUNT(DISTINCT r.id), 0), 1)         AS coverage_pct
+FROM testplans_testplan p
+JOIN requirements r  ON r.plan_id  = p.id
+LEFT JOIN testcases_testcase tc ON tc.requirement_id = r.id
+GROUP BY p.name
+ORDER BY coverage_pct;</pre>
+  </section>
+
+  <!-- 安全 -->
+  <section id="security">
+    <h2><span class="icon">🔒</span>安全与权限设计</h2>
+    <div class="security-grid">
+      <div class="security-item">
+        <div class="icon-wrap" style="background:#dbeafe">🛡</div>
+        <div>
+          <strong style="font-size:14px">GCP IAM 分层</strong>
+          <p style="font-size:13px;color:var(--gray-600);margin-top:4px">平台管理员 / 各团队 Lead / CI Service Account 三级权限隔离</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="icon-wrap" style="background:#dcfce7">🔑</div>
+        <div>
+          <strong style="font-size:14px">Secret Manager</strong>
+          <p style="font-size:13px;color:var(--gray-600);margin-top:4px">所有密钥（DB密码、API Key、Webhook Secret）统一存储，代码零硬编码</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="icon-wrap" style="background:#ede9fe">🌐</div>
+        <div>
+          <strong style="font-size:14px">VPC 私有网络</strong>
+          <p style="font-size:13px;color:var(--gray-600);margin-top:4px">Kiwi TCMS → Cloud SQL 走 VPC Private IP，不经过公网</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="icon-wrap" style="background:#fff7ed">📍</div>
+        <div>
+          <strong style="font-size:14px">固定出口 IP</strong>
+          <p style="font-size:13px;color:var(--gray-600);margin-top:4px">Cloud Function 配置 Cloud NAT，出口 IP 固定，支持外部系统白名单</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Secret Manager 存储清单</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Secret 名称</th><th>用途</th><th>访问方</th></tr></thead>
+        <tbody>
+          <tr><td><code>kiwi-db-password</code></td><td>Cloud SQL 数据库密码</td><td>Cloud Run</td></tr>
+          <tr><td><code>jira-webhook-secret</code></td><td>Jira Webhook 签名验证</td><td>Cloud Function</td></tr>
+          <tr><td><code>anthropic-api-key</code></td><td>Claude AI 调用</td><td>Cloud Function</td></tr>
+          <tr><td><code>grafana-db-readonly</code></td><td>Grafana 只读数据源</td><td>Grafana</td></tr>
+          <tr><td><code>kiwi-api-token</code></td><td>GitHub Actions 上报</td><td>GitHub Secrets</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 落地计划 -->
+  <section id="timeline">
+    <h2><span class="icon">📅</span>落地计划</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="week-label">第 1 周</div>
+        <h4>基础平台搭建</h4>
+        <p>部署 Kiwi TCMS on GCP Cloud Run + Cloud SQL；配置 Jira 双向集成；创建 Checkout / Inventory / Customer 三个项目空间</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week-label">第 2 周</div>
+        <h4>GitHub Actions 打通</h4>
+        <p>三个团队各自接入统一上报模板；测试结果自动汇聚到 Kiwi TCMS；CI 失败自动在 Jira 创建 Bug</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week-label">第 3 周</div>
+        <h4>AI 测试用例生成上线</h4>
+        <p>部署 Cloud Function；配置 Jira Webhook；Story 创建后 5 分钟内自动生成测试用例草稿，人工审核后激活</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week-label">第 4 周</div>
+        <h4>Dashboard &amp; 培训</h4>
+        <p>Grafana 多团队覆盖率 Dashboard 上线；各团队 Lead 培训；制定测试覆盖率 OKR（目标：需求覆盖率 &gt; 85%）</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 成本 -->
+  <section id="cost">
+    <h2><span class="icon">💰</span>成本估算</h2>
+    <div class="cost-highlight">
+      <div class="amount">~$33<span style="font-size:1.2rem;font-weight:400">/月</span></div>
+      <div class="label">自建方案总月成本（仅基础设施）</div>
+      <div class="cost-compare">
+        <div class="item">
+          <div class="val" style="color:var(--danger)">$2,500</div>
+          <div class="desc">qTest 月费（30用户）</div>
+        </div>
+        <div class="item" style="font-size:2rem;align-self:center">→</div>
+        <div class="item">
+          <div class="val" style="color:var(--success)">$33</div>
+          <div class="desc">自建方案月费</div>
+        </div>
+        <div class="item" style="font-size:2rem;align-self:center">=</div>
+        <div class="item">
+          <div class="val" style="color:var(--primary)">节省 98%</div>
+          <div class="desc">每年节省约 $29,604</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>组件</th><th>规格</th><th>月成本</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Cloud Run（Kiwi TCMS）</strong></td>
+            <td>1vCPU / 1GB</td>
+            <td><span class="badge-tag tag-green">~$15</span></td>
+            <td>按请求计费，低流量更省</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud SQL（PostgreSQL）</strong></td>
+            <td>db-f1-micro</td>
+            <td><span class="badge-tag tag-green">~$10</span></td>
+            <td>可用已有 Cloud SQL 实例</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud Functions（AI 生成）</strong></td>
+            <td>~1,000 次/月</td>
+            <td><span class="badge-tag tag-green">~$5</span></td>
+            <td>Serverless，按调用计费</td>
+          </tr>
+          <tr>
+            <td><strong>Claude Haiku API</strong></td>
+            <td>~1,000 Story/月</td>
+            <td><span class="badge-tag tag-green">~$3</span></td>
+            <td>每个 Story &lt; $0.01</td>
+          </tr>
+          <tr>
+            <td><strong>Grafana Cloud</strong></td>
+            <td>免费版（3用户）</td>
+            <td><span class="badge-tag tag-blue">$0</span></td>
+            <td>超出可用 GCP 自托管</td>
+          </tr>
+          <tr style="font-weight:700;background:var(--gray-50)">
+            <td colspan="2"><strong>合计</strong></td>
+            <td><span class="badge-tag tag-green" style="font-size:14px">~$33/月</span></td>
+            <td>一次性开发：约 3-4 周工程师时间</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>电商平台 AI 辅助全链路测试管理平台技术方案 · 基于 Kiwi TCMS + GCP + GitHub Actions + Claude AI</p>
+  <p style="margin-top:6px">Jira · GitHub · GCP · 阿里云</p>
+</footer>
+
+</body>
+</html>
