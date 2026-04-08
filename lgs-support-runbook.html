@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading Guidance System · Production Support Runbook v1.0</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --orange: #ea580c;
+    --orange-light: #ffedd5;
+    --yellow: #ca8a04;
+    --yellow-light: #fef9c3;
+    --purple: #7c3aed;
+    --purple-light: #ede9fe;
+    --gray-light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', 'Noto Sans', sans-serif; font-size: 14px; line-height: 1.7; }
+
+  /* TOP BANNER */
+  .top-banner {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+    color: white;
+    padding: 40px 60px 32px;
+  }
+  .top-banner .doc-type { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #93c5fd; margin-bottom: 10px; }
+  .top-banner h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .top-banner .subtitle { color: #bfdbfe; font-size: 15px; }
+  .meta-row { display: flex; gap: 32px; margin-top: 20px; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; color: #93c5fd; }
+  .meta-item strong { color: white; display: block; font-size: 13px; margin-bottom: 2px; }
+
+  /* STATUS PILLS */
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; }
+  .pill-red    { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+  .pill-orange { background: var(--orange-light); color: var(--orange); border: 1px solid #fdba74; }
+  .pill-yellow { background: var(--yellow-light); color: var(--yellow); border: 1px solid #fde047; }
+  .pill-blue   { background: var(--blue-light); color: var(--blue); border: 1px solid #93c5fd; }
+  .pill-green  { background: var(--green-light); color: var(--green); border: 1px solid #86efac; }
+  .pill-purple { background: var(--purple-light); color: var(--purple); border: 1px solid #c4b5fd; }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 200px); }
+  .sidebar {
+    background: #1e293b;
+    padding: 28px 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-section { padding: 6px 20px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; margin-top: 16px; }
+  .sidebar a {
+    display: block; padding: 7px 20px;
+    color: #94a3b8; text-decoration: none; font-size: 13px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover { color: white; background: rgba(255,255,255,0.05); border-left-color: #3b82f6; }
+  .content { padding: 48px 60px; max-width: 960px; }
+
+  /* SECTIONS */
+  .section { margin-bottom: 56px; }
+  h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--border);
+    color: var(--text);
+  }
+  h2 .section-num { color: var(--blue); margin-right: 8px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 24px 0 12px; color: var(--text); }
+  h4 { font-size: 13px; font-weight: 700; margin: 16px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  p { color: var(--muted); margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; color: var(--muted); margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* CALLOUT BOXES */
+  .callout {
+    border-radius: 8px; padding: 14px 16px; margin: 16px 0;
+    border-left: 4px solid;
+  }
+  .callout-info { background: var(--blue-light); border-color: var(--blue); }
+  .callout-warning { background: var(--yellow-light); border-color: var(--yellow); }
+  .callout-danger { background: var(--red-light); border-color: var(--red); }
+  .callout-success { background: var(--green-light); border-color: var(--green); }
+  .callout p { margin: 0; font-size: 13px; }
+  .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* TABLES */
+  .table-wrapper { overflow-x: auto; margin: 16px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--gray-light); }
+  th { padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-light); }
+
+  /* SLA CARDS */
+  .sla-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0; }
+  @media (max-width: 700px) { .sla-grid { grid-template-columns: 1fr; } }
+  .sla-card {
+    border-radius: 10px; padding: 20px;
+    border: 1px solid; position: relative; overflow: hidden;
+  }
+  .sla-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+  .sla-p1 { background: #fff5f5; border-color: #fca5a5; }
+  .sla-p1::before { background: var(--red); }
+  .sla-p2 { background: #fff7ed; border-color: #fdba74; }
+  .sla-p2::before { background: var(--orange); }
+  .sla-p3 { background: #fefce8; border-color: #fde047; }
+  .sla-p3::before { background: var(--yellow); }
+  .sla-p4 { background: #eff6ff; border-color: #93c5fd; }
+  .sla-p4::before { background: var(--blue); }
+  .sla-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .sla-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .sla-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .sla-metric { background: rgba(255,255,255,0.7); border-radius: 6px; padding: 8px 10px; }
+  .sla-metric-val { font-size: 18px; font-weight: 800; line-height: 1.2; }
+  .sla-metric-key { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  .sla-p1 .sla-metric-val { color: var(--red); }
+  .sla-p2 .sla-metric-val { color: var(--orange); }
+  .sla-p3 .sla-metric-val { color: var(--yellow); }
+  .sla-p4 .sla-metric-val { color: var(--blue); }
+
+  /* FLOW STEPS */
+  .flow-steps { margin: 16px 0; }
+  .flow-step {
+    display: flex; gap: 14px; margin-bottom: 4px;
+    position: relative;
+  }
+  .flow-step::before {
+    content: ''; position: absolute; left: 19px; top: 38px; bottom: -4px;
+    width: 2px; background: var(--border);
+  }
+  .flow-step:last-child::before { display: none; }
+  .step-num {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; background: var(--blue); color: white;
+    z-index: 1;
+  }
+  .step-body { padding: 8px 0 20px; flex: 1; }
+  .step-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .step-desc { color: var(--muted); font-size: 13px; }
+  .step-note { background: var(--gray-light); border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  /* STAFFING TABLE */
+  .staffing-role { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .staffing-role:last-child { border-bottom: none; }
+  .staffing-icon { font-size: 28px; width: 48px; flex-shrink: 0; }
+  .staffing-body { flex: 1; }
+  .staffing-title { font-weight: 700; font-size: 14px; }
+  .staffing-fte { display: inline-block; background: var(--blue); color: white; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-left: 8px; }
+  .staffing-desc { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .staffing-total { background: #1e293b; color: white; border-radius: 10px; padding: 20px 24px; margin-top: 24px; display: flex; justify-content: space-between; align-items: center; }
+  .staffing-total .total-label { font-size: 14px; color: #94a3b8; }
+  .staffing-total .total-val { font-size: 28px; font-weight: 800; color: #60a5fa; }
+  .staffing-total .total-note { font-size: 12px; color: #475569; margin-top: 4px; }
+
+  /* CODE */
+  code { background: var(--gray-light); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono', monospace; color: var(--blue); }
+  pre { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 16px 20px; font-size: 12px; line-height: 1.8; overflow-x: auto; margin: 12px 0; font-family: 'SF Mono', monospace; }
+
+  /* CONTACT MATRIX */
+  .contact-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px;
+  }
+  .contact-icon { font-size: 22px; width: 36px; flex-shrink: 0; }
+  .contact-name { font-weight: 700; font-size: 13px; }
+  .contact-scope { color: var(--muted); font-size: 12px; }
+
+  /* REVISION HISTORY */
+  .revision { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .revision:last-child { border-bottom: none; }
+  .rev-ver { font-weight: 700; font-family: monospace; min-width: 50px; color: var(--blue); }
+  .rev-date { color: var(--muted); min-width: 90px; }
+  .rev-note { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .content { padding: 24px 20px; }
+    .top-banner { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="top-banner">
+  <div class="doc-type">Production Support Document</div>
+  <h1>🚛 Loading Guidance System — Production Support &amp; SLA Runbook</h1>
+  <div class="subtitle">Global Warehouse Loading Guidance · Support Operations · Incident Management</div>
+  <div class="meta-row">
+    <div class="meta-item"><strong>Version</strong> 1.0 (Draft)</div>
+    <div class="meta-item"><strong>Effective Date</strong> 2026-04-08</div>
+    <div class="meta-item"><strong>Status</strong> <span class="pill pill-orange">Initial Launch Phase</span></div>
+    <div class="meta-item"><strong>Coverage</strong> 5–20 Cities · Global</div>
+    <div class="meta-item"><strong>Platform</strong> GCP (GKE / Cloud Run)</div>
+    <div class="meta-item"><strong>Ticketing</strong> ServiceNow</div>
+  </div>
+</div>
+
+<!-- TWO-COLUMN LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR NAV -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <a href="#overview">1. System Overview</a>
+    <a href="#severity">2. Severity Levels</a>
+    <a href="#sla">3. SLA Targets</a>
+    <div class="sidebar-section">Process</div>
+    <a href="#reporting">4. Incident Reporting</a>
+    <a href="#triage">5. Triage Process</a>
+    <a href="#escalation">6. Escalation Matrix</a>
+    <a href="#oncall">7. On-Call Rotation</a>
+    <div class="sidebar-section">Operations</div>
+    <a href="#runbook">8. Common Runbooks</a>
+    <a href="#communication">9. Communication</a>
+    <a href="#staffing">10. Staffing Estimate</a>
+    <div class="sidebar-section">Reference</div>
+    <a href="#review">11. SLA Review</a>
+    <a href="#revision">12. Revision History</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- 1. OVERVIEW -->
+    <div class="section" id="overview">
+      <h2><span class="section-num">01</span> System Overview &amp; Criticality</h2>
+
+      <div class="table-wrapper">
+        <table>
+          <tbody>
+            <tr><td style="font-weight:700;width:180px">System Name</td><td>Loading Guidance System (LGS)</td></tr>
+            <tr><td style="font-weight:700">Purpose</td><td>Guides warehouse staff on optimal truck loading sequences and configurations across global fulfillment sites</td></tr>
+            <tr><td style="font-weight:700">Users</td><td>Warehouse operations staff (internal employees), warehouse supervisors</td></tr>
+            <tr><td style="font-weight:700">Deployment</td><td>GCP — GKE / Cloud Run · Global multi-region</td></tr>
+            <tr><td style="font-weight:700">Scope</td><td>5–20 cities globally, multiple time zones</td></tr>
+            <tr><td style="font-weight:700">Operating Hours</td><td>06:00–22:00 local time per warehouse site (effectively near-24/7 globally)</td></tr>
+            <tr><td style="font-weight:700">Criticality</td><td><span class="pill pill-orange">Tier 2 — Business Critical</span></td></tr>
+            <tr><td style="font-weight:700">Manual Fallback</td><td>✅ Available — staff can execute manual loading procedures during system degradation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">ℹ️ Criticality Rationale</div>
+        <p>LGS is classified <strong>Tier 2 (Business Critical)</strong> rather than Tier 1 (Mission Critical) because manual fallback procedures exist. However, prolonged outages (&gt;4h) during warehouse peak hours significantly impact operational efficiency and throughput across multiple sites.</p>
+      </div>
+    </div>
+
+    <!-- 2. SEVERITY LEVELS -->
+    <div class="section" id="severity">
+      <h2><span class="section-num">02</span> Incident Severity Levels</h2>
+
+      <p>All incidents must be assigned a severity level at the time of triage. The following definitions apply specifically to LGS during its initial launch phase.</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Name</th>
+              <th>Definition</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-red">P1 · Critical</span></td>
+              <td>System-Wide Outage</td>
+              <td>LGS is completely unavailable <strong>across 3+ warehouse sites simultaneously</strong>. Manual fallback activated. Major operational impact.</td>
+              <td>GKE cluster crash; Cloud Run service 100% error rate globally; database unreachable</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">P2 · High</span></td>
+              <td>Site-Level Outage</td>
+              <td>LGS is unavailable or severely degraded for <strong>1–2 specific sites</strong>. Workers at those sites cannot use the system. Workaround in use.</td>
+              <td>Single region pod crash; config error causing one site to fail; authentication broken for one site</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-yellow">P3 · Medium</span></td>
+              <td>Feature Degradation</td>
+              <td>System is accessible but a <strong>specific loading guidance feature is broken or inaccurate</strong>. Core functionality still works. Workaround available.</td>
+              <td>Incorrect loading sequence suggestion; PDF report failing to generate; slow response (&gt;10s)</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">P4 · Low</span></td>
+              <td>Minor / Cosmetic</td>
+              <td>Minor UI issue, incorrect text/label, non-blocking bug. No operational impact.</td>
+              <td>Wrong label on button; minor display glitch; feature request misrouted as bug</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-title">⚠️ Initial Launch Phase — Severity Inflation Rule</div>
+        <p>During the first 90 days post-launch, treat all first-occurrence bugs at <strong>one severity higher</strong> than normal classification. Unknown failure modes are more likely and early signal collection is critical. Downgrade after root cause confirmed.</p>
+      </div>
+    </div>
+
+    <!-- 3. SLA TARGETS -->
+    <div class="section" id="sla">
+      <h2><span class="section-num">03</span> SLA Targets</h2>
+
+      <div class="sla-grid">
+        <div class="sla-card sla-p1">
+          <div class="sla-label">P1 · Critical</div>
+          <div class="sla-title">System-Wide Outage</div>
+          <p style="font-size:12px;color:#6b7280;margin-top:4px">Measured during warehouse operating hours (06:00–22:00 local)</p>
+          <div class="sla-metrics">
+            <div class="sla-metric">
+              <div class="sla-metric-val">15 min</div>
+              <div class="sla-metric-key">Acknowledge</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">2 h</div>
+              <div class="sla-metric-key">Resolution Target</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">30 min</div>
+              <div class="sla-metric-key">First Update</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">30 min</div>
+              <div class="sla-metric-key">Update Cadence</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sla-card sla-p2">
+          <div class="sla-label">P2 · High</div>
+          <div class="sla-title">Site-Level Outage</div>
+          <p style="font-size:12px;color:#6b7280;margin-top:4px">Single-site failure, workaround activated</p>
+          <div class="sla-metrics">
+            <div class="sla-metric">
+              <div class="sla-metric-val">30 min</div>
+              <div class="sla-metric-key">Acknowledge</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">4 h</div>
+              <div class="sla-metric-key">Resolution Target</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">1 h</div>
+              <div class="sla-metric-key">First Update</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">1 h</div>
+              <div class="sla-metric-key">Update Cadence</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sla-card sla-p3">
+          <div class="sla-label">P3 · Medium</div>
+          <div class="sla-title">Feature Degradation</div>
+          <p style="font-size:12px;color:#6b7280;margin-top:4px">Partial functionality, system usable</p>
+          <div class="sla-metrics">
+            <div class="sla-metric">
+              <div class="sla-metric-val">2 h</div>
+              <div class="sla-metric-key">Acknowledge</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">Next BD</div>
+              <div class="sla-metric-key">Resolution Target</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">4 h</div>
+              <div class="sla-metric-key">First Update</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">Daily</div>
+              <div class="sla-metric-key">Update Cadence</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sla-card sla-p4">
+          <div class="sla-label">P4 · Low</div>
+          <div class="sla-title">Minor / Cosmetic</div>
+          <p style="font-size:12px;color:#6b7280;margin-top:4px">No operational impact</p>
+          <div class="sla-metrics">
+            <div class="sla-metric">
+              <div class="sla-metric-val">8 h</div>
+              <div class="sla-metric-key">Acknowledge</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">5 BD</div>
+              <div class="sla-metric-key">Resolution Target</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">Next BD</div>
+              <div class="sla-metric-key">First Update</div>
+            </div>
+            <div class="sla-metric">
+              <div class="sla-metric-val">Weekly</div>
+              <div class="sla-metric-key">Update Cadence</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>System Availability Targets</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Tier</th><th>Monthly Uptime Target</th><th>Max Downtime / Month</th><th>Measurement Window</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Warehouse Hours</strong></td><td><span class="pill pill-green">≥ 99.5%</span></td><td>≤ 3.6 h / month</td><td>06:00–22:00 local, all sites</td></tr>
+            <tr><td><strong>Off-Hours</strong></td><td><span class="pill pill-blue">≥ 95%</span></td><td>Best effort</td><td>22:00–06:00 local</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title">📋 SLA Clock Rules</div>
+        <p><strong>Acknowledge clock</strong> starts from the moment the ticket is created in ServiceNow.<br>
+        <strong>Resolution clock</strong> stops when the system is confirmed restored by L1 or the reporter.<br>
+        <strong>Exclusions:</strong> Scheduled maintenance windows (communicated 48h in advance), GCP platform-level incidents outside our control.</p>
+      </div>
+    </div>
+
+    <!-- 4. INCIDENT REPORTING -->
+    <div class="section" id="reporting">
+      <h2><span class="section-num">04</span> Incident Reporting Process</h2>
+
+      <h3>For Warehouse Staff — How to Report</h3>
+
+      <div class="callout callout-success">
+        <div class="callout-title">✅ Primary Channel: ServiceNow</div>
+        <p>All incidents must be reported via <strong>ServiceNow</strong>. Do not report via email or informal channels — this ensures proper SLA tracking.</p>
+      </div>
+
+      <h4>Step-by-Step: Creating a ServiceNow Ticket</h4>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Navigate to ServiceNow Portal</div>
+            <div class="step-desc">Login to your company's ServiceNow instance. Select <strong>"Report an Issue"</strong> or <strong>"Create Incident"</strong>.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Fill in Required Fields</div>
+            <div class="step-desc">Complete all mandatory fields:</div>
+            <div class="step-note">
+              <strong>Affected System:</strong> Loading Guidance System (LGS)<br>
+              <strong>Site / Warehouse:</strong> [Your city and warehouse code]<br>
+              <strong>Impact:</strong> How many staff are affected? Can work continue?<br>
+              <strong>Description:</strong> What were you doing? What happened? What was expected?<br>
+              <strong>First Occurrence:</strong> Exact time and date (local timezone)<br>
+              <strong>Screenshot/Video:</strong> Attach evidence if possible
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Select Initial Priority</div>
+            <div class="step-desc">Use the severity definitions in Section 2 to select the appropriate priority. When in doubt, select higher severity — L1 will adjust during triage.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Submit &amp; Save Ticket Number</div>
+            <div class="step-desc">Note your <code>INC-XXXXXXX</code> ticket number. You will receive automated updates via email when the status changes.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Activate Manual Fallback (if needed)</div>
+            <div class="step-desc">If the system is unavailable, activate the manual loading procedure (refer to your local SOP). Do not wait for system recovery to continue operations.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Good Incident Description Template</h3>
+      <pre>
+<strong>What happened:</strong>
+When I click "Generate Loading Plan" for truck [truck ID], the page shows an error
+message: "Service temporarily unavailable" instead of the loading sequence.
+
+<strong>When:</strong> 2026-04-08 09:30 CST (UTC+8)
+
+<strong>Warehouse:</strong> CN-Shanghai-DC01
+
+<strong>How many staff affected:</strong> 3 loading operators on morning shift
+
+<strong>Can work continue?</strong> Yes, using manual paper checklist as fallback
+
+<strong>Steps to reproduce:</strong>
+1. Log in to LGS
+2. Select truck ID TRK-2045
+3. Click "Generate Loading Plan"
+4. Error appears immediately
+
+<strong>What was expected:</strong> A loading sequence PDF to be generated</pre>
+    </div>
+
+    <!-- 5. TRIAGE PROCESS -->
+    <div class="section" id="triage">
+      <h2><span class="section-num">05</span> Triage Process (IKEA-Aligned)</h2>
+
+      <p>LGS follows IKEA's standard 3-tier triage model aligned with the CDHF/ITIL framework. All incidents in ServiceNow are routed through this pipeline.</p>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num" style="background:#6366f1">L1</div>
+          <div class="step-body">
+            <div class="step-title">L1 — First Response &amp; Initial Triage</div>
+            <div class="step-desc"><strong>Owner:</strong> Global Support Desk (follows-the-sun)<br>
+            <strong>Goal:</strong> Acknowledge within SLA, assess initial severity, apply known fixes from runbook</div>
+            <div class="step-note">
+              <strong>Actions:</strong><br>
+              ① Confirm the issue is reproducible<br>
+              ② Check GCP Cloud Run / GKE health dashboard<br>
+              ③ Check Grafana/Loki for error spike in <code>lgs-api</code> service<br>
+              ④ Apply runbook fix if known pattern (see Section 8)<br>
+              ⑤ If unresolved within 30 min → escalate to L2<br>
+              <br>
+              <strong>Tools:</strong> ServiceNow · GCP Console · Grafana Loki · Slack/Teams alert channel
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:#2563eb">L2</div>
+          <div class="step-body">
+            <div class="step-title">L2 — Engineering On-Call</div>
+            <div class="step-desc"><strong>Owner:</strong> LGS Engineering Team (on-call rotation)<br>
+            <strong>Goal:</strong> Root cause identification, patch or rollback decision</div>
+            <div class="step-note">
+              <strong>Actions:</strong><br>
+              ① Pull incident from ServiceNow + Jira<br>
+              ② Search historical incidents for similar patterns<br>
+              ③ Correlate Grafana logs: <code>logcli query '{service_name="lgs-api"}' |= "ERROR"</code><br>
+              ④ Identify root cause (code / config / infra / data)<br>
+              ⑤ Apply fix or rollback deployment<br>
+              ⑥ Confirm resolution with L1 / reporter<br>
+              ⑦ Document root cause in ServiceNow ticket<br>
+              <br>
+              <strong>Decision Gate:</strong> If root cause requires architectural change or vendor involvement → escalate to L3
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num" style="background:#dc2626">L3</div>
+          <div class="step-body">
+            <div class="step-title">L3 — Specialist / Vendor Escalation</div>
+            <div class="step-desc"><strong>Owner:</strong> Senior Engineer / GCP Support / External Vendor<br>
+            <strong>Goal:</strong> Resolve complex infrastructure-level or vendor-dependent issues</div>
+            <div class="step-note">
+              <strong>When to escalate to L3:</strong><br>
+              • GCP platform incident (GKE node failure, Cloud Run quota exceeded)<br>
+              • Data corruption requiring DBA involvement<br>
+              • Security incident (potential breach)<br>
+              • Issue affecting ALL sites simultaneously with unknown root cause<br>
+              <br>
+              <strong>L3 Contacts:</strong> See Escalation Matrix (Section 6)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Triage Decision Tree</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Symptom</th><th>First Check</th><th>Likely Owner</th><th>Runbook</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>All sites unreachable</td><td>GCP Cloud Run status page + GKE cluster health</td><td>L2 → L3</td><td>RB-001</td></tr>
+            <tr><td>Single site only failing</td><td>Site config / regional routing / VPC firewall</td><td>L2</td><td>RB-002</td></tr>
+            <tr><td>Loading plan generation error</td><td>Loki logs: algorithm service errors, data quality</td><td>L2</td><td>RB-003</td></tr>
+            <tr><td>Slow response (&gt;10s)</td><td>GKE pod CPU/memory, Cloud SQL query time</td><td>L1/L2</td><td>RB-004</td></tr>
+            <tr><td>Login / Auth failure</td><td>Identity provider health, IAM config</td><td>L2</td><td>RB-005</td></tr>
+            <tr><td>Wrong loading data shown</td><td>Data pipeline freshness, ETL job status</td><td>L2</td><td>RB-006</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. ESCALATION MATRIX -->
+    <div class="section" id="escalation">
+      <h2><span class="section-num">06</span> Escalation Matrix</h2>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Severity</th><th>Escalate To</th><th>Escalation Trigger</th><th>Notify (FYI)</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-red">P1</span></td>
+              <td>L2 On-Call Engineer <strong>immediately</strong><br>Engineering Lead within 30 min<br>Product Owner within 1h</td>
+              <td>Incident created</td>
+              <td>Warehouse Operations Managers at all affected sites</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-orange">P2</span></td>
+              <td>L2 On-Call Engineer if not resolved in 30 min</td>
+              <td>L1 unable to resolve via runbook</td>
+              <td>Warehouse Supervisor at affected site</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-yellow">P3</span></td>
+              <td>L2 Engineering next business day</td>
+              <td>L1 runbook exhausted</td>
+              <td>None (ticket update sufficient)</td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-blue">P4</span></td>
+              <td>Dev team sprint backlog</td>
+              <td>Next sprint planning</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td>🔐 Security</td>
+              <td>Security team + Engineering Lead <strong>immediately</strong></td>
+              <td>Any potential data breach signal</td>
+              <td>CISO / Legal</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Key Contacts</h3>
+      <div class="contact-card">
+        <div class="contact-icon">🟦</div>
+        <div><div class="contact-name">L1 Global Support Desk</div><div class="contact-scope">ServiceNow queue: <code>LGS-SUPPORT</code> · 24/7 follow-the-sun coverage · First response owner</div></div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">🟠</div>
+        <div><div class="contact-name">L2 Engineering On-Call</div><div class="contact-scope">PagerDuty / On-call rotation · Direct Slack: <code>#lgs-oncall</code> · For P1/P2 only</div></div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">🔴</div>
+        <div><div class="contact-name">Engineering Lead / L3</div><div class="contact-scope">Escalation for unresolved P1 after 1h · Architecture and vendor decision authority</div></div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">☁️</div>
+        <div><div class="contact-name">GCP Support</div><div class="contact-scope">For platform-level incidents · GCP Console → Support → Create Case (use Production severity)</div></div>
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-title">🚨 P1 War Room Protocol</div>
+        <p>For any P1 incident lasting &gt;30 minutes without a clear fix path: convene a <strong>War Room bridge call</strong> on Teams/Zoom including L2 engineer + Engineering Lead + affected site Operations Manager. Maintain the bridge until resolution confirmed. Do not declare resolution without 5-minute smoke test confirmation from at least one warehouse site.</p>
+      </div>
+    </div>
+
+    <!-- 7. ON-CALL ROTATION -->
+    <div class="section" id="oncall">
+      <h2><span class="section-num">07</span> On-Call Rotation</h2>
+
+      <p>Given that LGS serves warehouses across multiple time zones globally, on-call must provide <strong>follow-the-sun</strong> coverage for the 06:00–22:00 operating window at every site.</p>
+
+      <h3>Coverage Windows</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Region</th><th>Local Operating Hours</th><th>UTC Equivalent</th><th>On-Call Zone</th></tr></thead>
+          <tbody>
+            <tr><td>🌏 APAC (e.g. CN, AU)</td><td>06:00–22:00 CST/AEST</td><td>~22:00–14:00 UTC</td><td>APAC On-Call</td></tr>
+            <tr><td>🌍 EMEA (e.g. EU)</td><td>06:00–22:00 CET</td><td>~05:00–21:00 UTC</td><td>EMEA On-Call</td></tr>
+            <tr><td>🌎 AMER</td><td>06:00–22:00 EST/PST</td><td>~11:00–03:00 UTC</td><td>AMER On-Call</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-title">⚠️ Initial Launch Phase</div>
+        <p>During the first 90 days post-launch, <strong>double the normal on-call staffing</strong>. New systems have a high rate of unexpected failures and configuration issues. Two engineers per zone should be on-call (primary + secondary) to reduce response time and avoid single-engineer burnout.</p>
+      </div>
+
+      <h3>On-Call Responsibilities</h3>
+      <ul>
+        <li>Monitor <code>#lgs-alerts</code> Slack/Teams channel during your on-call window</li>
+        <li>Respond to PagerDuty pages within 15 minutes for P1, 30 minutes for P2</li>
+        <li>Execute runbooks for known patterns before escalating</li>
+        <li>Document all actions taken in the ServiceNow ticket</li>
+        <li>Hand off open incidents with status summary at zone transition</li>
+        <li>Complete an Incident Report for all P1 and P2 incidents within 24h of resolution</li>
+      </ul>
+
+      <h3>Rotation Schedule</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Rotation Length</th><th>Handoff Day</th><th>Compensation</th></tr></thead>
+          <tbody>
+            <tr><td>1 week per engineer</td><td>Monday 09:00 local</td><td>Per IKEA on-call policy (time in lieu / on-call allowance)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8. COMMON RUNBOOKS -->
+    <div class="section" id="runbook">
+      <h2><span class="section-num">08</span> Common Runbooks (Initial Set)</h2>
+
+      <div class="callout callout-info">
+        <div class="callout-title">📝 Living Document</div>
+        <p>These runbooks are pre-populated based on common GKE/Cloud Run failure patterns. L2 engineers must <strong>add new entries</strong> after every P1/P2 incident resolution. Target: 80% of incidents resolved via runbook within 3 months of launch.</p>
+      </div>
+
+      <h3>RB-001: All Sites Unreachable</h3>
+      <pre>
+1. Check GCP Cloud Run service status:
+   GCP Console → Cloud Run → lgs-api → check for 5xx error rate
+   
+2. Check GKE cluster health (if applicable):
+   kubectl get pods -n lgs-production
+   kubectl describe pod [failing-pod] -n lgs-production
+
+3. Check Loki for error patterns:
+   logcli query '{service_name="lgs-api"} |= "ERROR"' --limit=50
+   
+4. If OOM/CPU: Scale up replicas:
+   kubectl scale deployment lgs-api --replicas=5 -n lgs-production
+   
+5. If bad deployment: Rollback:
+   kubectl rollout undo deployment/lgs-api -n lgs-production
+   
+6. Verify recovery: test from 2 different sites before closing</pre>
+
+      <h3>RB-004: Slow Response (&gt;10 seconds)</h3>
+      <pre>
+1. Check Cloud SQL query performance:
+   GCP Console → Cloud SQL → lgs-db → Query Insights
+   
+2. Check for missing index on loading_plan table (common on new data):
+   Run: EXPLAIN ANALYZE SELECT * FROM loading_plans WHERE site_id = ?
+   
+3. Check GKE pod memory/CPU:
+   kubectl top pods -n lgs-production
+   
+4. If database connections exhausted:
+   Restart connection pool: kubectl rollout restart deployment/lgs-api
+   
+5. If ETL data backlog causing full-table scan:
+   Contact data engineering team to pause and replay ETL job</pre>
+    </div>
+
+    <!-- 9. COMMUNICATION -->
+    <div class="section" id="communication">
+      <h2><span class="section-num">09</span> Communication During Incidents</h2>
+
+      <h3>Status Update Template (for ServiceNow and stakeholder comms)</h3>
+      <pre>
+[STATUS UPDATE — INC-XXXXXXX — P1 — Loading Guidance System]
+
+Time: 2026-04-08 10:15 CST
+Current Status: 🔴 INVESTIGATING
+
+Impact: LGS is unavailable at 3 warehouse sites (CN-SHA-DC01, CN-BJS-DC02, SG-SIN-DC01).
+Manual fallback procedures are active at all affected sites.
+
+What we know: Error rate spike observed in lgs-api at 09:48 CST. 
+Root cause: Under investigation. Suspected: recent config deployment at 09:30 CST.
+
+Actions taken:
+- L2 engineer engaged at 09:52 CST
+- Rollback to previous config in progress
+
+Next update: 10:45 CST or sooner if status changes.
+
+Engineer: [Name] | Incident Commander: [Name]</pre>
+
+      <h3>Resolution Confirmation Template</h3>
+      <pre>
+[RESOLVED — INC-XXXXXXX — P1 — Loading Guidance System]
+
+Time Resolved: 2026-04-08 11:00 CST
+Total Duration: 1h 12min
+
+Root Cause: Misconfigured environment variable in config deployment at 09:30 CST
+caused the loading algorithm service to fail authentication with Cloud SQL.
+
+Fix Applied: Rolled back config deployment. Corrected env variable. 
+Redeployed. Confirmed healthy at all 3 affected sites.
+
+Verification: Tested loading plan generation at CN-SHA-DC01 — working correctly.
+
+Next Steps:
+- Post-incident review scheduled: 2026-04-09 14:00 CST
+- Add config validation step to deployment pipeline (P3 ticket: INC-XXXXXXX)
+
+Thank you for your patience.</pre>
+    </div>
+
+    <!-- 10. STAFFING ESTIMATE -->
+    <div class="section" id="staffing">
+      <h2><span class="section-num">10</span> Support Staffing Estimate</h2>
+
+      <p>Based on: 5–20 city global coverage · 06:00–22:00 warehouse operating hours · 3 time zones · Initial launch phase · GKE/Cloud Run deployment.</p>
+
+      <div class="staffing-role">
+        <div class="staffing-icon">🟦</div>
+        <div class="staffing-body">
+          <div class="staffing-title">L1 Global Support (Follow-the-Sun) <span class="staffing-fte">2.0 FTE</span></div>
+          <div class="staffing-desc">
+            One L1 support agent per time zone shift covering APAC / EMEA / AMER warehouse hours.
+            Responsibilities: ServiceNow queue monitoring, ticket triage, runbook execution, status updates to reporters.
+            <br><br>
+            <strong>Breakdown:</strong> 3 time zone shifts × ~8h overlap each = 2 FTE equivalent (with some shared shift coverage).
+            Shared with existing IKEA global support desk is preferred model — dedicated headcount if volume exceeds 5 tickets/day.
+          </div>
+        </div>
+      </div>
+
+      <div class="staffing-role">
+        <div class="staffing-icon">🟠</div>
+        <div class="staffing-body">
+          <div class="staffing-title">L2 On-Call Engineering <span class="staffing-fte">1.5 FTE</span></div>
+          <div class="staffing-desc">
+            Engineering on-call rotation across 3 time zones. One primary + one secondary per zone during initial launch phase (first 90 days). After stabilization, reduce to one primary only.
+            <br><br>
+            <strong>Breakdown:</strong> 3 time zones × 1 engineer primary + 1 secondary (initial) = effectively 1.5 FTE of dedicated on-call capacity (rotation across team of 4–6 engineers, with on-call weeks shared).
+            <br><br>
+            <strong>Tools needed:</strong> PagerDuty integration with GCP Monitoring, Loki/Grafana access, <code>kubectl</code> access to production cluster.
+          </div>
+        </div>
+      </div>
+
+      <div class="staffing-role">
+        <div class="staffing-icon">🔴</div>
+        <div class="staffing-body">
+          <div class="staffing-title">L3 Engineering Specialist (Shared) <span class="staffing-fte">0.25 FTE</span></div>
+          <div class="staffing-desc">
+            Senior engineer or tech lead available for P1 escalation. Not a dedicated role — shared responsibility within the engineering team. ~5–10% of working time expected on L3 incidents in initial months.
+          </div>
+        </div>
+      </div>
+
+      <div class="staffing-role">
+        <div class="staffing-icon">📊</div>
+        <div class="staffing-body">
+          <div class="staffing-title">Incident Ops / SRE (if team &gt;10 cities) <span class="staffing-fte">0.5 FTE</span></div>
+          <div class="staffing-desc">
+            Optional role as system scales. Owns runbook maintenance, SLA reporting, post-incident reviews, and proactive monitoring improvements. Can be a shared SRE role across multiple systems.
+          </div>
+        </div>
+      </div>
+
+      <div class="staffing-total">
+        <div>
+          <div class="total-label">Total Estimated Support Headcount</div>
+          <div class="total-val">~4 FTE</div>
+          <div class="total-note">Initial launch phase · 3-zone follow-the-sun coverage · 5–20 cities</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;color:#475569;margin-bottom:8px">Phased recommendation:</div>
+          <div style="font-size:13px;color:#94a3b8"><strong style="color:#60a5fa">Month 1–3:</strong> 4 FTE (launch support)</div>
+          <div style="font-size:13px;color:#94a3b8"><strong style="color:#34d399">Month 4–12:</strong> 3 FTE (stabilized)</div>
+          <div style="font-size:13px;color:#94a3b8"><strong style="color:#a78bfa">Year 2+:</strong> 2–2.5 FTE (mature)</div>
+        </div>
+      </div>
+
+      <h3>Staffing Assumptions &amp; Caveats</h3>
+      <ul>
+        <li>Assumes L1 support is shared with IKEA's existing global support desk — if LGS has a dedicated support team, add 1 FTE</li>
+        <li>Assumes incident volume of 5–15 tickets/week in initial phase, tapering to 2–5/week after 6 months</li>
+        <li>On-call rotation is spread across 4–6 engineers to avoid burnout (each engineer on-call ~1 week per month)</li>
+        <li>If warehouse count grows beyond 20 cities, re-evaluate: add 0.5 FTE L1 per additional 10 cities</li>
+        <li>Does not include development effort for bug fixes — this is support/ops staffing only</li>
+      </ul>
+    </div>
+
+    <!-- 11. SLA REVIEW -->
+    <div class="section" id="review">
+      <h2><span class="section-num">11</span> SLA Review &amp; Continuous Improvement</h2>
+
+      <h3>Monthly SLA Review Checklist</h3>
+      <ul>
+        <li>☐ Calculate actual resolution times vs. SLA targets for each severity</li>
+        <li>☐ Review tickets breaching SLA — identify root causes (process gap? staffing gap? technical gap?)</li>
+        <li>☐ Update runbooks with new failure patterns discovered in the month</li>
+        <li>☐ Review on-call burnout metrics — adjust rotation if needed</li>
+        <li>☐ Check if severity re-classification was appropriate (retrospective)</li>
+        <li>☐ Share summary with warehouse operations stakeholders</li>
+      </ul>
+
+      <h3>90-Day Post-Launch Review</h3>
+      <div class="callout callout-info">
+        <div class="callout-title">📅 Mandatory Milestone</div>
+        <p>At day 90, conduct a formal review to: (1) assess actual incident volume vs. estimates, (2) right-size staffing, (3) consider removing "initial launch phase" severity inflation rule if system is stable, (4) update SLA targets based on observed system performance.</p>
+      </div>
+
+      <h3>Key Metrics to Track</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Metric</th><th>Target</th><th>Measurement</th></tr></thead>
+          <tbody>
+            <tr><td>P1 SLA Compliance</td><td>≥ 95%</td><td>% of P1 tickets resolved within 2h</td></tr>
+            <tr><td>P2 SLA Compliance</td><td>≥ 90%</td><td>% of P2 tickets resolved within 4h</td></tr>
+            <tr><td>First Contact Resolution (L1)</td><td>≥ 40%</td><td>% tickets resolved by L1 without L2 escalation</td></tr>
+            <tr><td>Mean Time to Acknowledge (MTTA)</td><td>&lt; 20 min (P1)</td><td>ServiceNow timestamp delta</td></tr>
+            <tr><td>Mean Time to Resolve (MTTR)</td><td>&lt; 3h (P1/P2 avg)</td><td>ServiceNow resolution time</td></tr>
+            <tr><td>System Availability</td><td>≥ 99.5% warehouse hours</td><td>GCP uptime monitoring</td></tr>
+            <tr><td>Runbook Coverage</td><td>≥ 80% of incidents</td><td>% tickets resolved via runbook</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12. REVISION HISTORY -->
+    <div class="section" id="revision">
+      <h2><span class="section-num">12</span> Revision History</h2>
+      <div class="revision">
+        <div class="rev-ver">v1.0</div>
+        <div class="rev-date">2026-04-08</div>
+        <div class="rev-note">Initial draft. Covers severity levels, SLA targets, incident reporting via ServiceNow, 3-tier triage, escalation matrix, on-call rotation, initial runbooks, and staffing estimate for global 5–20 city deployment on GCP.</div>
+      </div>
+      <br>
+      <div class="callout callout-warning">
+        <div class="callout-title">⚠️ Review &amp; Approval Required</div>
+        <p>This document must be reviewed and approved by: <strong>Engineering Lead</strong>, <strong>Product Owner</strong>, and <strong>Warehouse Operations Lead</strong> before being distributed to warehouse sites. Placeholder contacts (Section 6) must be replaced with actual names and channels before go-live.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
