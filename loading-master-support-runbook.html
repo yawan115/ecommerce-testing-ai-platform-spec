@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading Guidance System · Production Support Runbook v1.0</title>
+<title>Loading Master · Production Support Runbook v1.0</title>
 <style>
   :root {
     --bg: #f8fafc;
@@ -197,8 +197,8 @@
 <!-- HEADER -->
 <div class="top-banner">
   <div class="doc-type">Production Support Document</div>
-  <h1>🚛 Loading Guidance System — Production Support &amp; SLA Runbook</h1>
-  <div class="subtitle">Global Warehouse Loading Guidance · Support Operations · Incident Management</div>
+  <h1>🚛 Loading Master — Production Support &amp; SLA Runbook</h1>
+  <div class="subtitle">Loading Master · Global Warehouse Support Operations · Incident Management</div>
   <div class="meta-row">
     <div class="meta-item"><strong>Version</strong> 1.0 (Draft)</div>
     <div class="meta-item"><strong>Effective Date</strong> 2026-04-08</div>
@@ -242,7 +242,7 @@
       <div class="table-wrapper">
         <table>
           <tbody>
-            <tr><td style="font-weight:700;width:180px">System Name</td><td>Loading Guidance System (LGS)</td></tr>
+            <tr><td style="font-weight:700;width:180px">System Name</td><td>Loading Master</td></tr>
             <tr><td style="font-weight:700">Purpose</td><td>Guides warehouse staff on optimal truck loading sequences and configurations across global fulfillment sites</td></tr>
             <tr><td style="font-weight:700">Users</td><td>Warehouse operations staff (internal employees), warehouse supervisors</td></tr>
             <tr><td style="font-weight:700">Deployment</td><td>GCP — GKE / Cloud Run · Global multi-region</td></tr>
@@ -256,7 +256,7 @@
 
       <div class="callout callout-info">
         <div class="callout-title">ℹ️ Criticality Rationale</div>
-        <p>LGS is classified <strong>Tier 2 (Business Critical)</strong> rather than Tier 1 (Mission Critical) because manual fallback procedures exist. However, prolonged outages (&gt;4h) during warehouse peak hours significantly impact operational efficiency and throughput across multiple sites.</p>
+        <p>Loading Master is classified <strong>Tier 2 (Business Critical)</strong> rather than Tier 1 (Mission Critical) because manual fallback procedures exist. However, prolonged outages (&gt;4h) during warehouse peak hours significantly impact operational efficiency and throughput across multiple sites.</p>
       </div>
     </div>
 
@@ -264,7 +264,7 @@
     <div class="section" id="severity">
       <h2><span class="section-num">02</span> Incident Severity Levels</h2>
 
-      <p>All incidents must be assigned a severity level at the time of triage. The following definitions apply specifically to LGS during its initial launch phase.</p>
+      <p>All incidents must be assigned a severity level at the time of triage. The following definitions apply specifically to Loading Master during its initial launch phase.</p>
 
       <div class="table-wrapper">
         <table>
@@ -280,19 +280,19 @@
             <tr>
               <td><span class="pill pill-red">P1 · Critical</span></td>
               <td>System-Wide Outage</td>
-              <td>LGS is completely unavailable <strong>across 3+ warehouse sites simultaneously</strong>. Manual fallback activated. Major operational impact.</td>
+              <td>Loading Master is completely unavailable <strong>across 3+ warehouse sites simultaneously</strong>. Manual fallback activated. Major operational impact.</td>
               <td>GKE cluster crash; Cloud Run service 100% error rate globally; database unreachable</td>
             </tr>
             <tr>
               <td><span class="pill pill-orange">P2 · High</span></td>
               <td>Site-Level Outage</td>
-              <td>LGS is unavailable or severely degraded for <strong>1–2 specific sites</strong>. Workers at those sites cannot use the system. Workaround in use.</td>
+              <td>Loading Master is unavailable or severely degraded for <strong>1–2 specific sites</strong>. Workers at those sites cannot use the system. Workaround in use.</td>
               <td>Single region pod crash; config error causing one site to fail; authentication broken for one site</td>
             </tr>
             <tr>
               <td><span class="pill pill-yellow">P3 · Medium</span></td>
               <td>Feature Degradation</td>
-              <td>System is accessible but a <strong>specific loading guidance feature is broken or inaccurate</strong>. Core functionality still works. Workaround available.</td>
+              <td>System is accessible but a <strong>specific Loading Master feature is broken or inaccurate</strong>. Core functionality still works. Workaround available.</td>
               <td>Incorrect loading sequence suggestion; PDF report failing to generate; slow response (&gt;10s)</td>
             </tr>
             <tr>
@@ -458,7 +458,7 @@
             <div class="step-title">Fill in Required Fields</div>
             <div class="step-desc">Complete all mandatory fields:</div>
             <div class="step-note">
-              <strong>Affected System:</strong> Loading Guidance System (LGS)<br>
+              <strong>Affected System:</strong> Loading Master<br>
               <strong>Site / Warehouse:</strong> [Your city and warehouse code]<br>
               <strong>Impact:</strong> How many staff are affected? Can work continue?<br>
               <strong>Description:</strong> What were you doing? What happened? What was expected?<br>
@@ -505,7 +505,7 @@ message: "Service temporarily unavailable" instead of the loading sequence.
 <strong>Can work continue?</strong> Yes, using manual paper checklist as fallback
 
 <strong>Steps to reproduce:</strong>
-1. Log in to LGS
+1. Log in to Loading Master
 2. Select truck ID TRK-2045
 3. Click "Generate Loading Plan"
 4. Error appears immediately
@@ -517,7 +517,7 @@ message: "Service temporarily unavailable" instead of the loading sequence.
     <div class="section" id="triage">
       <h2><span class="section-num">05</span> Triage Process (IKEA-Aligned)</h2>
 
-      <p>LGS follows IKEA's standard 3-tier triage model aligned with the CDHF/ITIL framework. All incidents in ServiceNow are routed through this pipeline.</p>
+      <p>Loading Master follows IKEA's standard 3-tier triage model aligned with the CDHF/ITIL framework. All incidents in ServiceNow are routed through this pipeline.</p>
 
       <div class="flow-steps">
         <div class="flow-step">
@@ -530,7 +530,7 @@ message: "Service temporarily unavailable" instead of the loading sequence.
               <strong>Actions:</strong><br>
               ① Confirm the issue is reproducible<br>
               ② Check GCP Cloud Run / GKE health dashboard<br>
-              ③ Check Grafana/Loki for error spike in <code>lgs-api</code> service<br>
+              ③ Check Grafana/Loki for error spike in <code>loading-master-api</code> service<br>
               ④ Apply runbook fix if known pattern (see Section 8)<br>
               ⑤ If unresolved within 30 min → escalate to L2<br>
               <br>
@@ -542,13 +542,13 @@ message: "Service temporarily unavailable" instead of the loading sequence.
           <div class="step-num" style="background:#2563eb">L2</div>
           <div class="step-body">
             <div class="step-title">L2 — Engineering On-Call</div>
-            <div class="step-desc"><strong>Owner:</strong> LGS Engineering Team (on-call rotation)<br>
+            <div class="step-desc"><strong>Owner:</strong> Loading Master Engineering Team (on-call rotation)<br>
             <strong>Goal:</strong> Root cause identification, patch or rollback decision</div>
             <div class="step-note">
               <strong>Actions:</strong><br>
               ① Pull incident from ServiceNow + Jira<br>
               ② Search historical incidents for similar patterns<br>
-              ③ Correlate Grafana logs: <code>logcli query '{service_name="lgs-api"}' |= "ERROR"</code><br>
+              ③ Correlate Grafana logs: <code>logcli query '{service_name="loading-master-api"}' |= "ERROR"</code><br>
               ④ Identify root cause (code / config / infra / data)<br>
               ⑤ Apply fix or rollback deployment<br>
               ⑥ Confirm resolution with L1 / reporter<br>
@@ -642,11 +642,11 @@ message: "Service temporarily unavailable" instead of the loading sequence.
       <h3>Key Contacts</h3>
       <div class="contact-card">
         <div class="contact-icon">🟦</div>
-        <div><div class="contact-name">L1 Global Support Desk</div><div class="contact-scope">ServiceNow queue: <code>LGS-SUPPORT</code> · 24/7 follow-the-sun coverage · First response owner</div></div>
+        <div><div class="contact-name">L1 Global Support Desk</div><div class="contact-scope">ServiceNow queue: <code>LOADING-MASTER-SUPPORT</code> · 24/7 follow-the-sun coverage · First response owner</div></div>
       </div>
       <div class="contact-card">
         <div class="contact-icon">🟠</div>
-        <div><div class="contact-name">L2 Engineering On-Call</div><div class="contact-scope">PagerDuty / On-call rotation · Direct Slack: <code>#lgs-oncall</code> · For P1/P2 only</div></div>
+        <div><div class="contact-name">L2 Engineering On-Call</div><div class="contact-scope">PagerDuty / On-call rotation · Direct Slack: <code>#loading-master-oncall</code> · For P1/P2 only</div></div>
       </div>
       <div class="contact-card">
         <div class="contact-icon">🔴</div>
@@ -667,7 +667,7 @@ message: "Service temporarily unavailable" instead of the loading sequence.
     <div class="section" id="oncall">
       <h2><span class="section-num">07</span> On-Call Rotation</h2>
 
-      <p>Given that LGS serves warehouses across multiple time zones globally, on-call must provide <strong>follow-the-sun</strong> coverage for the 06:00–22:00 operating window at every site.</p>
+      <p>Given that Loading Master serves warehouses across multiple time zones globally, on-call must provide <strong>follow-the-sun</strong> coverage for the 06:00–22:00 operating window at every site.</p>
 
       <h3>Coverage Windows</h3>
       <div class="table-wrapper">
@@ -688,7 +688,7 @@ message: "Service temporarily unavailable" instead of the loading sequence.
 
       <h3>On-Call Responsibilities</h3>
       <ul>
-        <li>Monitor <code>#lgs-alerts</code> Slack/Teams channel during your on-call window</li>
+        <li>Monitor <code>#loading-master-alerts</code> Slack/Teams channel during your on-call window</li>
         <li>Respond to PagerDuty pages within 15 minutes for P1, 30 minutes for P2</li>
         <li>Execute runbooks for known patterns before escalating</li>
         <li>Document all actions taken in the ServiceNow ticket</li>
@@ -719,36 +719,36 @@ message: "Service temporarily unavailable" instead of the loading sequence.
       <h3>RB-001: All Sites Unreachable</h3>
       <pre>
 1. Check GCP Cloud Run service status:
-   GCP Console → Cloud Run → lgs-api → check for 5xx error rate
+   GCP Console → Cloud Run → loading-master-api → check for 5xx error rate
    
 2. Check GKE cluster health (if applicable):
-   kubectl get pods -n lgs-production
-   kubectl describe pod [failing-pod] -n lgs-production
+   kubectl get pods -n loading-master-production
+   kubectl describe pod [failing-pod] -n loading-master-production
 
 3. Check Loki for error patterns:
-   logcli query '{service_name="lgs-api"} |= "ERROR"' --limit=50
+   logcli query '{service_name="loading-master-api"} |= "ERROR"' --limit=50
    
 4. If OOM/CPU: Scale up replicas:
-   kubectl scale deployment lgs-api --replicas=5 -n lgs-production
+   kubectl scale deployment loading-master-api --replicas=5 -n loading-master-production
    
 5. If bad deployment: Rollback:
-   kubectl rollout undo deployment/lgs-api -n lgs-production
+   kubectl rollout undo deployment/loading-master-api -n loading-master-production
    
 6. Verify recovery: test from 2 different sites before closing</pre>
 
       <h3>RB-004: Slow Response (&gt;10 seconds)</h3>
       <pre>
 1. Check Cloud SQL query performance:
-   GCP Console → Cloud SQL → lgs-db → Query Insights
+   GCP Console → Cloud SQL → loading-master-db → Query Insights
    
 2. Check for missing index on loading_plan table (common on new data):
    Run: EXPLAIN ANALYZE SELECT * FROM loading_plans WHERE site_id = ?
    
 3. Check GKE pod memory/CPU:
-   kubectl top pods -n lgs-production
+   kubectl top pods -n loading-master-production
    
 4. If database connections exhausted:
-   Restart connection pool: kubectl rollout restart deployment/lgs-api
+   Restart connection pool: kubectl rollout restart deployment/loading-master-api
    
 5. If ETL data backlog causing full-table scan:
    Contact data engineering team to pause and replay ETL job</pre>
@@ -760,15 +760,15 @@ message: "Service temporarily unavailable" instead of the loading sequence.
 
       <h3>Status Update Template (for ServiceNow and stakeholder comms)</h3>
       <pre>
-[STATUS UPDATE — INC-XXXXXXX — P1 — Loading Guidance System]
+[STATUS UPDATE — INC-XXXXXXX — P1 — Loading Master]
 
 Time: 2026-04-08 10:15 CST
 Current Status: 🔴 INVESTIGATING
 
-Impact: LGS is unavailable at 3 warehouse sites (CN-SHA-DC01, CN-BJS-DC02, SG-SIN-DC01).
+Impact: Loading Master is unavailable at 3 warehouse sites (CN-SHA-DC01, CN-BJS-DC02, SG-SIN-DC01).
 Manual fallback procedures are active at all affected sites.
 
-What we know: Error rate spike observed in lgs-api at 09:48 CST. 
+What we know: Error rate spike observed in loading-master-api at 09:48 CST. 
 Root cause: Under investigation. Suspected: recent config deployment at 09:30 CST.
 
 Actions taken:
@@ -781,7 +781,7 @@ Engineer: [Name] | Incident Commander: [Name]</pre>
 
       <h3>Resolution Confirmation Template</h3>
       <pre>
-[RESOLVED — INC-XXXXXXX — P1 — Loading Guidance System]
+[RESOLVED — INC-XXXXXXX — P1 — Loading Master]
 
 Time Resolved: 2026-04-08 11:00 CST
 Total Duration: 1h 12min
@@ -871,7 +871,7 @@ Thank you for your patience.</pre>
 
       <h3>Staffing Assumptions &amp; Caveats</h3>
       <ul>
-        <li>Assumes L1 support is shared with IKEA's existing global support desk — if LGS has a dedicated support team, add 1 FTE</li>
+        <li>Assumes L1 support is shared with IKEA's existing global support desk — if Loading Master has a dedicated support team, add 1 FTE</li>
         <li>Assumes incident volume of 5–15 tickets/week in initial phase, tapering to 2–5/week after 6 months</li>
         <li>On-call rotation is spread across 4–6 engineers to avoid burnout (each engineer on-call ~1 week per month)</li>
         <li>If warehouse count grows beyond 20 cities, re-evaluate: add 0.5 FTE L1 per additional 10 cities</li>
